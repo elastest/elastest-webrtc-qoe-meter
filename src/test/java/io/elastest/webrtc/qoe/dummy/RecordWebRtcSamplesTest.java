@@ -17,19 +17,17 @@
 package io.elastest.webrtc.qoe.dummy;
 
 import static java.lang.invoke.MethodHandles.lookup;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.File;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 import org.slf4j.Logger;
 
 import io.elastest.webrtc.qoe.ElasTestRemoteControlParent;
-import io.github.bonigarcia.seljup.Options;
+import io.github.bonigarcia.seljup.Arguments;
 import io.github.bonigarcia.seljup.SeleniumExtension;
 
 @ExtendWith(SeleniumExtension.class)
@@ -37,24 +35,16 @@ public class RecordWebRtcSamplesTest extends ElasTestRemoteControlParent {
 
     final Logger log = getLogger(lookup().lookupClass());
 
-    public RecordWebRtcSamplesTest(ChromeDriver driver) {
+    public RecordWebRtcSamplesTest(
+            @Arguments({ "--use-fake-device-for-media-stream",
+                    "--use-fake-ui-for-media-stream" }) ChromeDriver driver) {
         super(driver,
                 "https://webrtc.github.io/samples/src/content/devices/input-output/");
-    }
-
-    @Options
-    ChromeOptions chromeOptions = new ChromeOptions();
-    {
-        chromeOptions.addArguments("--use-fake-device-for-media-stream",
-                "--use-fake-ui-for-media-stream");
     }
 
     @Test
     void webrtcTest() throws InterruptedException {
         Thread.sleep(3000);
-        
-        assertThat(driver.findElement(By.id("video")).getTagName(),
-                equalTo("video"));
 
         startRecording("window.stream");
 
@@ -62,7 +52,10 @@ public class RecordWebRtcSamplesTest extends ElasTestRemoteControlParent {
 
         stopRecording();
 
-        saveRecordingToDisk("simple.webm", ".");
+        String downloads = System.getProperty("user.home") + File.separator
+                + "Downloads";
+
+        saveRecordingToDisk("simple.webm", downloads);
     }
 
 }

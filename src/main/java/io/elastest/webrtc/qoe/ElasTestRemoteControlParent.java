@@ -151,7 +151,7 @@ public class ElasTestRemoteControlParent {
     public File saveRecordingToDisk(String fileName, String downloadsFolder) {
         executeScript(REMOTE_CONTROL_JS_OBJECT + ".saveRecordingToDisk('"
                 + fileName + "');");
-        File output = new File(downloadsFolder + fileName);
+        File output = new File(downloadsFolder, fileName);
         do {
             if (!output.exists()) {
                 try {
