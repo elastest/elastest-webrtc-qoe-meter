@@ -49,6 +49,7 @@
 
         <!-- Plugins versions -->
         <maven-surefire-plugin.version>2.22.0</maven-surefire-plugin.version>
+        <minify-maven-plugin.version>1.7.6</minify-maven-plugin.version>
     </properties>
 
     <!-- Apache Software License -->
@@ -113,6 +114,29 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven-surefire-plugin.version}</version>
             </plugin>
+            <plugin>
+                <groupId>com.samaxes.maven</groupId>
+                <artifactId>minify-maven-plugin</artifactId>
+                <version>${minify-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>default-minify</id>
+                        <configuration>
+                            <webappSourceDir>${project.basedir}/src/main/resources</webappSourceDir>
+                            <webappTargetDir>${project.build.directory}/classes</webappTargetDir>
+                            <jsSourceFiles>
+                                <jsSourceFile>elastest-remote-control.js</jsSourceFile>
+                            </jsSourceFiles>
+                            <jsEngine>CLOSURE</jsEngine>
+                            <closureCompilationLevel>SIMPLE_OPTIMIZATIONS</closureCompilationLevel>
+                        </configuration>
+                        <goals>
+                            <goal>minify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 
