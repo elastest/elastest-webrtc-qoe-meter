@@ -1,0 +1,84 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- Project coordinates & description -->
+    <groupId>io.elastest.eus</groupId>
+    <artifactId>elastest-webrtc-qoe-meter</artifactId>
+    <packaging>jar</packaging>
+    <version>0.0.1-SNAPSHOT</version>
+
+    <name>${project.groupId}:${project.artifactId}</name>
+    <description>Experiments aimed to measure the Quality of Experience (QoE) of WebRTC applications.</description>
+    <url>https://github.com/elastest/elastest-webrtc-qoe-meter</url>
+
+    <!-- Organization & developers -->
+    <organization>
+        <name>Elastest</name>
+        <url>http://elastest.io</url>
+    </organization>
+
+    <developers>
+        <developer>
+            <id>URJC</id>
+            <organization>Universidad Rey Juan Carlos</organization>
+            <organizationUrl>https://www.urjc.es/</organizationUrl>
+        </developer>
+    </developers>
+
+    <properties>
+        <!-- Java 8 -->
+        <java.version>1.8</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+
+        <!-- Encoding -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- Test dependencies version -->
+        <junit.jupiter.version>5.3.2</junit.jupiter.version>
+
+        <!-- Plugins versions -->
+        <maven-surefire-plugin.version>2.22.0</maven-surefire-plugin.version>
+    </properties>
+
+    <!-- Apache Software License -->
+    <licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+
+    <!-- Source code manager -->
+    <scm>
+        <url>https://github.com/elastest/elastest-webrtc-qoe-meter</url>
+        <connection>scm:git:https://github.com/elastest/elastest-webrtc-qoe-meter</connection>
+        <developerConnection>scm:git://git@github.com:elastest/elastest-webrtc-qoe-meter</developerConnection>
+        <tag>develop</tag>
+    </scm>
+
+    <dependencies>
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <!-- Plugins -->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
