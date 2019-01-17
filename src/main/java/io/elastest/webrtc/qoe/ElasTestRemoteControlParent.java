@@ -50,7 +50,6 @@ public class ElasTestRemoteControlParent {
 
     private void initDriver() {
         try {
-            String sut = "https://bonigarcia.github.io/selenium-jupiter/";
             log.debug("Testing {} with {}", sut, driver);
             driver.get(sut);
 
@@ -76,7 +75,7 @@ public class ElasTestRemoteControlParent {
             copy(inputStream, writer, defaultCharset());
             jsContent = writer.toString();
         }
-        log.debug("Content of injected file: {}", jsContent);
+        log.trace("Content of injected file: {}", jsContent);
 
         String remoteControlJs = "var remoteControlScript=window.document.createElement('script');";
         remoteControlJs += "remoteControlScript.type='text/javascript';";
