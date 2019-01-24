@@ -33,6 +33,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.file.NoSuchFileException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.JavascriptExecutor;
@@ -46,29 +48,29 @@ public class ElasTestRemoteControlParent {
     static final String REMOTE_CONTROL_JS_OBJECT = "elasTestRemoteControl";
     static final int POLL_TIME_MS = 500;
 
-    public WebDriver driver;
+    public List<WebDriver> drivers;
     public String sut;
 
-    public ElasTestRemoteControlParent(WebDriver driver, String sut) {
-        this.driver = driver;
+    public ElasTestRemoteControlParent(String sut, WebDriver... drivers) {
+        this.drivers = Arrays.asList(drivers);
         this.sut = sut;
 
-        initDriver();
+        this.drivers.stream().forEach(this::initDriver);
     }
 
-    private void initDriver() {
+    private void initDriver(WebDriver driver) {
         try {
             log.debug("Testing {} with {}", sut, driver);
             driver.get(sut);
 
-            injectRemoteControlJs();
-            injectRecordRtc();
+            injectRemoteControlJs(driver);
+            injectRecordRtc(driver);
         } catch (Exception e) {
             log.warn("Exception injecting JavaScript files", e);
         }
     }
 
-    private void injectRemoteControlJs() throws IOException {
+    private void injectRemoteControlJs(WebDriver driver) throws IOException {
         String jsPath = "js/script.min.js";
         log.debug("Injecting {} in {}", jsPath, driver);
 
@@ -92,23 +94,23 @@ public class ElasTestRemoteControlParent {
         remoteControlJs += "remoteControlScript.text='" + jsContent + "';";
         remoteControlJs += "window.document.head.appendChild(remoteControlScript);";
         remoteControlJs += "return true;";
-        this.executeScript(remoteControlJs);
+        this.executeScript(driver, remoteControlJs);
     }
 
-    private void injectRecordRtc() {
+    private void injectRecordRtc(WebDriver driver) {
         String recordingJs = "var recScript=window.document.createElement('script');";
         recordingJs += "recScript.type='text/javascript';";
         recordingJs += "recScript.src='https://cdn.webrtc-experiment.com/RecordRTC.js';";
         recordingJs += "window.document.head.appendChild(recScript);";
         recordingJs += "return true;";
-        this.executeScript(recordingJs);
+        this.executeScript(driver, recordingJs);
 
         // Wait for RecordRTC object
         Object recordRTC = null;
         do {
 
             try {
-                recordRTC = this.executeScript("return RecordRTC");
+                recordRTC = this.executeScript(driver, "return RecordRTC");
                 log.trace("RecordRTC object already available {}", recordRTC);
             } catch (Exception e) {
                 log.trace(
@@ -119,15 +121,15 @@ public class ElasTestRemoteControlParent {
         } while (recordRTC == null);
     }
 
-    private Object executeScript(String command) {
+    private Object executeScript(WebDriver driver, String command) {
         return ((JavascriptExecutor) driver).executeScript(command);
     }
 
-    private Object getProperty(String property) {
+    private Object getProperty(WebDriver driver, String property) {
         Object value = null;
         for (int i = 0; i < 60; i++) {
-            value = executeScript("return " + REMOTE_CONTROL_JS_OBJECT + "."
-                    + property + ";");
+            value = executeScript(driver, "return " + REMOTE_CONTROL_JS_OBJECT
+                    + "." + property + ";");
             if (value != null) {
                 break;
             } else {
@@ -143,29 +145,30 @@ public class ElasTestRemoteControlParent {
 
     // Public API
 
-    public String sayHello() {
-        return executeScript(
+    public String sayHello(WebDriver driver) {
+        return executeScript(driver,
                 "return " + REMOTE_CONTROL_JS_OBJECT + ".sayHello();")
                         .toString();
     }
 
-    public void startRecording() {
-        startRecording("window.stream");
+    public void startRecording(WebDriver driver) {
+        startRecording(driver, "window.stream");
     }
 
-    public void startRecording(String stream) {
-        executeScript(
+    public void startRecording(WebDriver driver, String stream) {
+        executeScript(driver,
                 REMOTE_CONTROL_JS_OBJECT + ".startRecording(" + stream + ");");
     }
 
-    public void stopRecording() {
-        executeScript(REMOTE_CONTROL_JS_OBJECT + ".stopRecording();");
-        getProperty("recordRTC");
+    public void stopRecording(WebDriver driver) {
+        executeScript(driver, REMOTE_CONTROL_JS_OBJECT + ".stopRecording();");
+        getProperty(driver, "recordRTC");
     }
 
-    public File saveRecordingToDisk(String fileName, String downloadsFolder) {
-        executeScript(REMOTE_CONTROL_JS_OBJECT + ".saveRecordingToDisk('"
-                + fileName + "');");
+    public File saveRecordingToDisk(WebDriver driver, String fileName,
+            String downloadsFolder) {
+        executeScript(driver, REMOTE_CONTROL_JS_OBJECT
+                + ".saveRecordingToDisk('" + fileName + "');");
         File output = new File(downloadsFolder, fileName);
         do {
             if (!output.exists()) {
@@ -177,18 +180,20 @@ public class ElasTestRemoteControlParent {
         return output;
     }
 
-    public void openRecordingInNewTab() {
-        executeScript(REMOTE_CONTROL_JS_OBJECT + ".openRecordingInNewTab();");
+    public void openRecordingInNewTab(WebDriver driver) {
+        executeScript(driver,
+                REMOTE_CONTROL_JS_OBJECT + ".openRecordingInNewTab();");
     }
 
-    public File getRecording() throws IOException {
+    public File getRecording(WebDriver driver) throws IOException {
         File tmpFile = createTempFile(valueOf(nanoTime()), ".webm");
-        return getRecording(tmpFile.getAbsolutePath());
+        return getRecording(driver, tmpFile.getAbsolutePath());
     }
 
-    public File getRecording(String fileName) throws IOException {
-        executeScript(REMOTE_CONTROL_JS_OBJECT + ".recordingToData();");
-        String recording = getProperty("recordingData").toString();
+    public File getRecording(WebDriver driver, String fileName)
+            throws IOException {
+        executeScript(driver, REMOTE_CONTROL_JS_OBJECT + ".recordingToData();");
+        String recording = getProperty(driver, "recordingData").toString();
 
         // Base64 to File
         File outputFile = new File(fileName);

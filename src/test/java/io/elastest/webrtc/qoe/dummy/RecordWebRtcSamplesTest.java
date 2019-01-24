@@ -40,18 +40,21 @@ public class RecordWebRtcSamplesTest extends ElasTestRemoteControlParent {
     static final String SUT_URL = "https://webrtc.github.io/samples/src/content/devices/input-output/";
     static final int TEST_TIME_SEC = 3;
 
+    ChromeDriver driver;
+
     public RecordWebRtcSamplesTest(
             @Arguments({ "--use-fake-device-for-media-stream",
                     "--use-fake-ui-for-media-stream" }) ChromeDriver driver) {
-        super(driver, SUT_URL);
+        super(SUT_URL, driver);
+        this.driver = driver;
     }
 
     @Test
     void webrtcTest() throws IOException {
-        startRecording();
+        startRecording(driver);
         waitSeconds(TEST_TIME_SEC);
-        stopRecording();
-        File recording = getRecording();
+        stopRecording(driver);
+        File recording = getRecording(driver);
         assertTrue(recording.exists());
     }
 

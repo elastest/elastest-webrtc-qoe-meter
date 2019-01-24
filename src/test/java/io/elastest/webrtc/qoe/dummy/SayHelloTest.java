@@ -34,13 +34,16 @@ public class SayHelloTest extends ElasTestRemoteControlParent {
 
     final Logger log = getLogger(lookup().lookupClass());
 
+    ChromeDriver driver;
+
     public SayHelloTest(ChromeDriver driver) {
-        super(driver, "https://bonigarcia.github.io/selenium-jupiter/");
+        super("https://bonigarcia.github.io/selenium-jupiter/", driver);
+        this.driver = driver;
     }
 
     @Test
     void helloTest() throws InterruptedException {
-        String sayHello = sayHello();
+        String sayHello = sayHello(driver);
         log.debug("Message from remote control: {}", sayHello);
         assertThat(sayHello, notNullValue());
     }
