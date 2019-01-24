@@ -44,8 +44,6 @@ public class RecordWebRtcSamplesTest extends ElasTestRemoteControlParent {
 
     @Test
     void webrtcTest() throws InterruptedException {
-        Thread.sleep(3000);
-
         startRecording("window.stream");
 
         Thread.sleep(3000);

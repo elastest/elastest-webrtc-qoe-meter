@@ -60,11 +60,10 @@ public class ElasTestRemoteControlParent {
             driver.get(sut);
 
             injectRemoteControlJs();
-        } catch (IOException e) {
+            injectRecordRtc();
+        } catch (Exception e) {
             log.warn("Exception injecting remote-control JavaScript", e);
         }
-
-        injectRecordRtc();
     }
 
     private void injectRemoteControlJs() throws IOException {
@@ -94,13 +93,28 @@ public class ElasTestRemoteControlParent {
         this.executeScript(remoteControlJs);
     }
 
-    private void injectRecordRtc() {
+    private void injectRecordRtc() throws InterruptedException {
         String recordingJs = "var recScript=window.document.createElement('script');";
         recordingJs += "recScript.type='text/javascript';";
         recordingJs += "recScript.src='https://cdn.webrtc-experiment.com/RecordRTC.js';";
         recordingJs += "window.document.head.appendChild(recScript);";
         recordingJs += "return true;";
         this.executeScript(recordingJs);
+
+        // Wait for RecordRTC object
+        Object recordRTC = null;
+        do {
+
+            try {
+                recordRTC = this.executeScript("return RecordRTC");
+                log.trace("RecordRTC object already available {}", recordRTC);
+            } catch (Exception e) {
+                log.trace(
+                        "RecordRTC object still not available ... retrying in {} ms",
+                        POLL_TIME_MS);
+                Thread.sleep(POLL_TIME_MS);
+            }
+        } while (recordRTC == null);
     }
 
     private Object executeScript(String command) {
