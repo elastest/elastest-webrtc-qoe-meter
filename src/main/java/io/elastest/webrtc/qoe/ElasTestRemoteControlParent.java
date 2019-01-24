@@ -19,6 +19,7 @@ package io.elastest.webrtc.qoe;
 import static java.io.File.createTempFile;
 import static java.lang.String.valueOf;
 import static java.lang.System.nanoTime;
+import static java.lang.Thread.sleep;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.nio.charset.Charset.defaultCharset;
 import static java.nio.file.Files.readAllBytes;
@@ -32,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.file.NoSuchFileException;
+import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
@@ -62,7 +64,7 @@ public class ElasTestRemoteControlParent {
             injectRemoteControlJs();
             injectRecordRtc();
         } catch (Exception e) {
-            log.warn("Exception injecting remote-control JavaScript", e);
+            log.warn("Exception injecting JavaScript files", e);
         }
     }
 
@@ -93,7 +95,7 @@ public class ElasTestRemoteControlParent {
         this.executeScript(remoteControlJs);
     }
 
-    private void injectRecordRtc() throws InterruptedException {
+    private void injectRecordRtc() {
         String recordingJs = "var recScript=window.document.createElement('script');";
         recordingJs += "recScript.type='text/javascript';";
         recordingJs += "recScript.src='https://cdn.webrtc-experiment.com/RecordRTC.js';";
@@ -112,7 +114,7 @@ public class ElasTestRemoteControlParent {
                 log.trace(
                         "RecordRTC object still not available ... retrying in {} ms",
                         POLL_TIME_MS);
-                Thread.sleep(POLL_TIME_MS);
+                waitMilliSeconds(POLL_TIME_MS);
             }
         } while (recordRTC == null);
     }
@@ -129,14 +131,9 @@ public class ElasTestRemoteControlParent {
             if (value != null) {
                 break;
             } else {
-                try {
-                    log.debug("{} not present still... waiting {} ms", property,
-                            POLL_TIME_MS);
-                    Thread.sleep(POLL_TIME_MS);
-                } catch (InterruptedException e) {
-                    log.warn("Exception wait polling whil getting {}", property,
-                            e);
-                }
+                log.debug("{} not present still... waiting {} ms", property,
+                        POLL_TIME_MS);
+                waitMilliSeconds(POLL_TIME_MS);
             }
         }
         String clazz = value != null ? value.getClass().getName() : "";
@@ -172,11 +169,7 @@ public class ElasTestRemoteControlParent {
         File output = new File(downloadsFolder, fileName);
         do {
             if (!output.exists()) {
-                try {
-                    Thread.sleep(POLL_TIME_MS); // polling
-                } catch (InterruptedException e) {
-                    log.warn("Exception waiting for file {}", output, e);
-                }
+                waitMilliSeconds(POLL_TIME_MS);
             } else {
                 break;
             }
@@ -204,6 +197,18 @@ public class ElasTestRemoteControlParent {
         writeByteArrayToFile(outputFile, bytes);
 
         return outputFile;
+    }
+
+    public void waitSeconds(int seconds) {
+        waitMilliSeconds(TimeUnit.SECONDS.toMillis(seconds));
+    }
+
+    public void waitMilliSeconds(long milliseconds) {
+        try {
+            sleep(milliseconds);
+        } catch (InterruptedException e) {
+            log.warn("Exception waiting {} ms", milliseconds, e);
+        }
     }
 
 }

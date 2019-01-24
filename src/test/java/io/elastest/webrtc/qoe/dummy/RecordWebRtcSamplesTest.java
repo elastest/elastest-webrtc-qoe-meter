@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,17 +37,19 @@ public class RecordWebRtcSamplesTest extends ElasTestRemoteControlParent {
 
     final Logger log = getLogger(lookup().lookupClass());
 
+    static final String SUT_URL = "https://webrtc.github.io/samples/src/content/devices/input-output/";
+    static final int TEST_TIME_SEC = 3;
+
     public RecordWebRtcSamplesTest(
             @Arguments({ "--use-fake-device-for-media-stream",
                     "--use-fake-ui-for-media-stream" }) ChromeDriver driver) {
-        super(driver,
-                "https://webrtc.github.io/samples/src/content/devices/input-output/");
+        super(driver, SUT_URL);
     }
 
     @Test
-    void webrtcTest() throws Exception {
+    void webrtcTest() throws IOException {
         startRecording();
-        Thread.sleep(3000);
+        waitSeconds(TEST_TIME_SEC);
         stopRecording();
         File recording = getRecording();
         assertTrue(recording.exists());
