@@ -18,11 +18,13 @@ package io.elastest.webrtc.qoe;
 
 import static java.io.File.createTempFile;
 import static java.lang.String.valueOf;
+import static java.lang.System.currentTimeMillis;
 import static java.lang.System.nanoTime;
 import static java.lang.Thread.sleep;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.nio.charset.Charset.defaultCharset;
 import static java.nio.file.Files.readAllBytes;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.codec.binary.Base64.decodeBase64;
 import static org.apache.commons.io.FileUtils.writeByteArrayToFile;
 import static org.apache.commons.io.IOUtils.copy;
@@ -35,18 +37,23 @@ import java.io.StringWriter;
 import java.nio.file.NoSuchFileException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
+import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
 
 public class ElasTestRemoteControlParent {
 
     final Logger log = getLogger(lookup().lookupClass());
 
+    public static final String FAKE_DEVICE = "--use-fake-device-for-media-stream";
+    public static final String FAKE_UI = "--use-fake-ui-for-media-stream";
+
     static final String REMOTE_CONTROL_JS_OBJECT = "elasTestRemoteControl";
     static final int POLL_TIME_MS = 500;
+    static final int WAIT_SEC = 10;
 
     public List<WebDriver> drivers;
     public String sut;
@@ -106,19 +113,7 @@ public class ElasTestRemoteControlParent {
         this.executeScript(driver, recordingJs);
 
         // Wait for RecordRTC object
-        Object recordRTC = null;
-        do {
-
-            try {
-                recordRTC = this.executeScript(driver, "return RecordRTC");
-                log.trace("RecordRTC object already available {}", recordRTC);
-            } catch (Exception e) {
-                log.trace(
-                        "RecordRTC object still not available ... retrying in {} ms",
-                        POLL_TIME_MS);
-                waitMilliSeconds(POLL_TIME_MS);
-            }
-        } while (recordRTC == null);
+        waitForJsObject(driver, "RecordRTC");
     }
 
     private Object executeScript(WebDriver driver, String command) {
@@ -156,6 +151,7 @@ public class ElasTestRemoteControlParent {
     }
 
     public void startRecording(WebDriver driver, String stream) {
+        waitForJsObject(driver, stream);
         executeScript(driver,
                 REMOTE_CONTROL_JS_OBJECT + ".startRecording(" + stream + ");");
     }
@@ -205,7 +201,7 @@ public class ElasTestRemoteControlParent {
     }
 
     public void waitSeconds(int seconds) {
-        waitMilliSeconds(TimeUnit.SECONDS.toMillis(seconds));
+        waitMilliSeconds(SECONDS.toMillis(seconds));
     }
 
     public void waitMilliSeconds(long milliseconds) {
@@ -214,6 +210,34 @@ public class ElasTestRemoteControlParent {
         } catch (InterruptedException e) {
             log.warn("Exception waiting {} ms", milliseconds, e);
         }
+    }
+
+    public void waitForJsObject(WebDriver driver, String jsObject) {
+        Object object = null;
+        long timeoutMs = currentTimeMillis() + SECONDS.toMillis(WAIT_SEC);
+        do {
+            try {
+                if (currentTimeMillis() > timeoutMs) {
+                    log.warn(
+                            "Timeout of {} seconds waiting for object {} ... exiting",
+                            WAIT_SEC, jsObject);
+                    break;
+                }
+                object = this.executeScript(driver, "return " + jsObject);
+                log.debug("{} object already available {}", jsObject, object);
+            } catch (Exception e) {
+                log.trace("{} object still not available ... retrying in {} ms",
+                        jsObject, POLL_TIME_MS);
+                waitMilliSeconds(POLL_TIME_MS);
+            }
+        } while (object == null);
+    }
+
+    public void clearAndSendKeysToElementById(WebDriver driver, String id,
+            String keys) {
+        WebElement userName = driver.findElement(By.id(id));
+        userName.clear();
+        userName.sendKeys(keys);
     }
 
 }
