@@ -17,6 +17,7 @@
 package io.elastest.webrtc.qoe.dummy;
 
 import static java.lang.invoke.MethodHandles.lookup;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
@@ -43,17 +44,12 @@ public class RecordWebRtcSamplesTest extends ElasTestRemoteControlParent {
     }
 
     @Test
-    void webrtcTest() throws InterruptedException {
-        startRecording("window.stream");
-
+    void webrtcTest() throws Exception {
+        startRecording();
         Thread.sleep(3000);
-
         stopRecording();
-
-        String downloads = System.getProperty("user.home") + File.separator
-                + "Downloads";
-
-        saveRecordingToDisk("simple.webm", downloads);
+        File recording = getRecording();
+        assertTrue(recording.exists());
     }
 
 }

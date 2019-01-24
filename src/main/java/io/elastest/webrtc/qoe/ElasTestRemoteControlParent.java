@@ -152,6 +152,10 @@ public class ElasTestRemoteControlParent {
                         .toString();
     }
 
+    public void startRecording() {
+        startRecording("window.stream");
+    }
+
     public void startRecording(String stream) {
         executeScript(
                 REMOTE_CONTROL_JS_OBJECT + ".startRecording(" + stream + ");");
