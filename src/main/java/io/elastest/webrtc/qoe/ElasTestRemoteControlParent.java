@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.file.NoSuchFileException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -53,16 +54,22 @@ public class ElasTestRemoteControlParent {
 
     static final String REMOTE_CONTROL_JS_OBJECT = "elasTestRemoteControl";
     static final int POLL_TIME_MS = 500;
-    static final int WAIT_SEC = 10;
+    static final int WAIT_SEC = 30;
 
     public List<WebDriver> drivers;
     public String sut;
 
     public ElasTestRemoteControlParent(String sut, WebDriver... drivers) {
-        this.drivers = Arrays.asList(drivers);
+        this.drivers = new ArrayList<>(Arrays.asList(drivers));
         this.sut = sut;
 
         this.drivers.stream().forEach(this::initDriver);
+    }
+
+    public void addExtraDrivers(List<WebDriver> newDrivers) {
+        this.drivers.addAll(newDrivers);
+
+        newDrivers.stream().forEach(this::initDriver);
     }
 
     private void initDriver(WebDriver driver) {
