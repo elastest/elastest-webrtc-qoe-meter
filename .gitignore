@@ -41,3 +41,5 @@ buildNumber.properties
 
 # Media files
 *.webm
+*.mp4
+*.y4m
