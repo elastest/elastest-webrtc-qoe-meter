@@ -26,8 +26,8 @@ ElasTestRemoteControl.prototype.sayHello = function() {
 	return hello;
 }
 
-ElasTestRemoteControl.prototype.startRecording = function(stream, recordingType,
-		mediaContainerFormat) {
+ElasTestRemoteControl.prototype.startRecording = function(stream,
+		recordingType, mediaContainerFormat) {
 	// Defaults
 	var mimeType = "video/webm";
 	var isChrome = true;
@@ -174,6 +174,19 @@ ElasTestRemoteControl.prototype.recordingToData = function() {
 		}
 	}
 }
+
+/*
+ * Override RTCPeerConnection
+ */
+var peerConnections = [];
+var origPeerConnection = window.RTCPeerConnection;
+window.RTCPeerConnection = function(pcConfig, pcConstraints) {
+	pcConfig.sdpSemantics = "unified-plan";
+	var pc = new origPeerConnection(pcConfig, pcConstraints);
+	peerConnections.push(pc);
+	return pc;
+}
+window.RTCPeerConnection.prototype = origPeerConnection.prototype;
 
 /*
  * Instantiation of ElasTestRemoteControl object
