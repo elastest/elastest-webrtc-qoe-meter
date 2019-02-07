@@ -62,7 +62,7 @@ public class OpenViduBasicConferenceTest extends ElasTestRemoteControlParent {
         presenter.findElement(By.name("commit")).click();
 
         // Viewer
-        clearAndSendKeysToElementById(viewer, "userName", PRESENTER_NAME);
+        clearAndSendKeysToElementById(viewer, "userName", VIEWER_NAME);
         clearAndSendKeysToElementById(viewer, "sessionId", SESSION_NAME);
         viewer.findElement(By.name("commit")).click();
 
