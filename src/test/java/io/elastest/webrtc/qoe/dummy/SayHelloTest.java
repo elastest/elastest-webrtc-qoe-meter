@@ -42,7 +42,7 @@ public class SayHelloTest extends ElasTestRemoteControlParent {
     }
 
     @Test
-    void helloTest() throws InterruptedException {
+    void helloTest() {
         String sayHello = sayHello(driver);
         log.debug("Message from remote control: {}", sayHello);
         assertThat(sayHello, notNullValue());
