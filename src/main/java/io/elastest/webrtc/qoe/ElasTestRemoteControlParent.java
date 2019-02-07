@@ -123,10 +123,6 @@ public class ElasTestRemoteControlParent {
         waitForJsObject(driver, "RecordRTC");
     }
 
-    private Object executeScript(WebDriver driver, String command) {
-        return ((JavascriptExecutor) driver).executeScript(command);
-    }
-
     private Object getProperty(WebDriver driver, String property) {
         Object value = null;
         for (int i = 0; i < 60; i++) {
@@ -146,6 +142,10 @@ public class ElasTestRemoteControlParent {
     }
 
     // Public API
+
+    public Object executeScript(WebDriver driver, String command) {
+        return ((JavascriptExecutor) driver).executeScript(command);
+    }
 
     public String sayHello(WebDriver driver) {
         return executeScript(driver,
