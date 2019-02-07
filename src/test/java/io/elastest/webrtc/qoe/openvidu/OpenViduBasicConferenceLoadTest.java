@@ -46,7 +46,7 @@ public class OpenViduBasicConferenceLoadTest
     final Logger log = getLogger(lookup().lookupClass());
 
     static final String SUT_URL = "https://demos.openvidu.io/basic-videoconference/";
-    static final int TEST_TIME_SEC = 30;
+    static final int TEST_TIME_SEC = 15;
     static final int NUM_VIEWERS = 5;
     static final String PRESENTER_NAME = "presenter";
     static final String VIEWER_NAME = "viewer";
@@ -57,7 +57,8 @@ public class OpenViduBasicConferenceLoadTest
     List<WebDriver> viewers;
 
     public OpenViduBasicConferenceLoadTest(
-            @Arguments({ FAKE_DEVICE, FAKE_UI }) ChromeDriver presenter,
+            @Arguments({ FAKE_DEVICE, FAKE_UI,
+                    FAKE_FILE }) ChromeDriver presenter,
             @Arguments({ FAKE_DEVICE, FAKE_UI }) ChromeDriver viewer,
             @Arguments({ FAKE_DEVICE,
                     FAKE_UI }) @DockerBrowser(type = CHROME, size = NUM_VIEWERS) List<WebDriver> viewers) {

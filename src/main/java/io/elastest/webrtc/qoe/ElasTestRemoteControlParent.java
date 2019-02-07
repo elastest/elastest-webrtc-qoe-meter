@@ -51,6 +51,7 @@ public class ElasTestRemoteControlParent {
 
     public static final String FAKE_DEVICE = "--use-fake-device-for-media-stream";
     public static final String FAKE_UI = "--use-fake-ui-for-media-stream";
+    public static final String FAKE_FILE = "--use-file-for-fake-video-capture=test.y4m";
 
     static final String REMOTE_CONTROL_JS_OBJECT = "elasTestRemoteControl";
     static final int POLL_TIME_MS = 500;
