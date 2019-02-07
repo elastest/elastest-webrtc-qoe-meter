@@ -43,3 +43,5 @@ buildNumber.properties
 *.webm
 *.mp4
 *.y4m
+*.yuv
+*.jpg
