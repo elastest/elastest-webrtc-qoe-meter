@@ -117,7 +117,7 @@ public class ElasTestRemoteControlParent {
     private void injectRecordRtc(WebDriver driver) {
         String recordingJs = "var recScript=window.document.createElement('script');";
         recordingJs += "recScript.type='text/javascript';";
-        recordingJs += "recScript.src='https://cdn.webrtc-experiment.com/RecordRTC.js';";
+        recordingJs += "recScript.src='https://webrtcexperiment-webrtc.netdna-ssl.com/RecordRTC.min.js';";
         recordingJs += "window.document.head.appendChild(recScript);";
         recordingJs += "return true;";
         this.executeScript(driver, recordingJs);
@@ -225,6 +225,8 @@ public class ElasTestRemoteControlParent {
     public void waitForJsObject(WebDriver driver, String jsObject) {
         Object object = null;
         long timeoutMs = currentTimeMillis() + SECONDS.toMillis(WAIT_SEC);
+        log.debug("Waiting for {} in {} (timeout {} seconds)", jsObject, driver,
+                WAIT_SEC);
         do {
             try {
                 if (currentTimeMillis() > timeoutMs) {
@@ -234,13 +236,22 @@ public class ElasTestRemoteControlParent {
                     break;
                 }
                 object = this.executeScript(driver, "return " + jsObject);
-                log.debug("{} object already available {}", jsObject, object);
+                if (object != null) {
+                    log.debug("{} object already available {}", jsObject,
+                            object);
+                } else {
+                    poll(jsObject);
+                }
             } catch (Exception e) {
-                log.trace("{} object still not available ... retrying in {} ms",
-                        jsObject, POLL_TIME_MS);
-                waitMilliSeconds(POLL_TIME_MS);
+                poll(jsObject);
             }
         } while (object == null);
+    }
+
+    private void poll(String jsObject) {
+        log.trace("{} object still not available ... retrying in {} ms",
+                jsObject, POLL_TIME_MS);
+        waitMilliSeconds(POLL_TIME_MS);
     }
 
     public void clearAndSendKeysToElementById(WebDriver driver, String id,
