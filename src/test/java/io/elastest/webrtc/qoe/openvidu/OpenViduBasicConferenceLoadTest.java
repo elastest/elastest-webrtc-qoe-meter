@@ -47,23 +47,23 @@ public class OpenViduBasicConferenceLoadTest
 
     static final String SUT_URL = "https://demos.openvidu.io/basic-videoconference/";
     static final int TEST_TIME_SEC = 15;
-    static final int NUM_VIEWERS = 5;
+    static final int NUM_VIEWERS = 1;
     static final String PRESENTER_NAME = "presenter";
     static final String VIEWER_NAME = "viewer";
     static final String SESSION_NAME = "qoe-session";
     static final String WEBM_EXT = ".webm";
 
-    ChromeDriver presenter, viewer;
+    WebDriver presenter, viewer;
     List<WebDriver> viewers;
 
     public OpenViduBasicConferenceLoadTest(
             @Arguments({ FAKE_DEVICE, FAKE_UI,
                     FAKE_FILE }) ChromeDriver presenter,
-            @Arguments({ FAKE_DEVICE, FAKE_UI }) ChromeDriver viewer,
+            @Arguments({ FAKE_DEVICE, FAKE_UI }) WebDriver viewer,
             @Arguments({ FAKE_DEVICE,
-                    FAKE_UI }) @DockerBrowser(type = CHROME, size = NUM_VIEWERS) List<WebDriver> viewers) {
+                    FAKE_UI }) @DockerBrowser(type = CHROME, size = NUM_VIEWERS, url = "http://192.168.0.113:2375") List<WebDriver> viewers) {
         super(SUT_URL, presenter, viewer);
-        addExtraDrivers(viewers);
+        addExtraDrivers(viewers, false);
 
         this.presenter = presenter;
         this.viewer = viewer;
