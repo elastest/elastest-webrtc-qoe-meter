@@ -64,22 +64,24 @@ public class ElasTestRemoteControlParent {
         this.drivers = new ArrayList<>(Arrays.asList(drivers));
         this.sut = sut;
 
-        this.drivers.stream().forEach(this::initDriver);
+        this.drivers.stream().forEach(w -> initDriver(w, true));
     }
 
-    public void addExtraDrivers(List<WebDriver> newDrivers) {
+    public void addExtraDrivers(List<WebDriver> newDrivers, boolean inject) {
         this.drivers.addAll(newDrivers);
 
-        newDrivers.stream().forEach(this::initDriver);
+        newDrivers.stream().forEach(w -> initDriver(w, inject));
     }
 
-    private void initDriver(WebDriver driver) {
+    private void initDriver(WebDriver driver, boolean inject) {
         try {
             log.debug("Testing {} with {}", sut, driver);
             driver.get(sut);
 
-            injectRemoteControlJs(driver);
-            injectRecordRtc(driver);
+            if (inject) {
+                injectRemoteControlJs(driver);
+                injectRecordRtc(driver);
+            }
         } catch (Exception e) {
             log.warn("Exception injecting JavaScript files", e);
         }
