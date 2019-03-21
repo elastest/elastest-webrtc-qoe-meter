@@ -32,6 +32,8 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.slf4j.Logger;
 
+import com.spotify.docker.client.exceptions.DockerException;
+
 import io.elastest.webrtc.qoe.ElasTestRemoteControlParent;
 import io.github.bonigarcia.seljup.Arguments;
 import io.github.bonigarcia.seljup.DockerBrowser;
@@ -56,12 +58,14 @@ public class OpenViduBasicConferenceLoadTest
     WebDriver presenter, viewer;
     List<WebDriver> viewers;
 
+    // FIXME: Use proper IP for URL (external Docker to generate load)
     public OpenViduBasicConferenceLoadTest(
             @Arguments({ FAKE_DEVICE, FAKE_UI,
                     FAKE_FILE }) ChromeDriver presenter,
             @Arguments({ FAKE_DEVICE, FAKE_UI }) WebDriver viewer,
             @Arguments({ FAKE_DEVICE,
-                    FAKE_UI }) @DockerBrowser(type = CHROME, size = NUM_VIEWERS, url = "http://192.168.0.113:2375") List<WebDriver> viewers) {
+                    FAKE_UI }) @DockerBrowser(type = CHROME, size = NUM_VIEWERS, url = "http://192.168.0.113:2375") List<WebDriver> viewers)
+            throws DockerException, InterruptedException {
         super(SUT_URL, presenter, viewer);
         addExtraDrivers(viewers, false);
 
