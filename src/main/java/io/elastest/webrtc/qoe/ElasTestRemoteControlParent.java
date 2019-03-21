@@ -88,7 +88,10 @@ public class ElasTestRemoteControlParent {
     }
 
     private void injectRemoteControlJs(WebDriver driver) throws IOException {
-        String jsPath = "js/script.min.js";
+        String jsPath = "js/elastest-remote-control.min.js";
+        // The automated minified version would be:
+        // String jsPath = "js/script.min.js";
+
         log.debug("Injecting {} in {}", jsPath, driver);
 
         String jsContent = "";
