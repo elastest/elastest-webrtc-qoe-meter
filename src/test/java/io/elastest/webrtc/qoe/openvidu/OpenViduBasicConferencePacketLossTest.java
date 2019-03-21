@@ -48,7 +48,7 @@ public class OpenViduBasicConferencePacketLossTest
 
     final Logger log = getLogger(lookup().lookupClass());
 
-    static final int TEST_TIME_SEC = 30;
+    static final int TEST_TIME_SEC = 70;
     static final int PACKET_LOSS_PERCENTAGE = 50;
 
     static final String FAKE_FILE_IN_CONTAINER = "--use-file-for-fake-video-capture=/home/selenium/test.y4m";
@@ -114,28 +114,36 @@ public class OpenViduBasicConferencePacketLossTest
         startRecording(viewer,
                 "session.streamManagers[0].stream.webRtcPeer.pc.getRemoteStreams()[0]");
 
-        // Simulate packet loss in viewer container
-        String[] tc = { "sudo", "tc", "qdisc", "replace", "dev", "eth0", "root",
-                "netem", "loss", PACKET_LOSS_PERCENTAGE + "%" };
-        execCommandInContainer(presenter, tc);
+        if (PACKET_LOSS_PERCENTAGE > 0) {
+            // Simulate packet loss in viewer container
+            String[] tc = { "sudo", "tc", "qdisc", "replace", "dev", "eth0",
+                    "root", "netem", "loss", PACKET_LOSS_PERCENTAGE + "%" };
+            execCommandInContainer(presenter, tc);
+        }
 
         // Wait
         waitSeconds(TEST_TIME_SEC);
 
-        // Clear packet loss
-        String[] clear = { "sudo", "tc", "qdisc", "replace", "dev", "eth0",
-                "root", "netem", "loss", "0%" };
-        execCommandInContainer(presenter, clear);
+        if (PACKET_LOSS_PERCENTAGE > 0) {
+            // Clear packet loss
+            String[] clear = { "sudo", "tc", "qdisc", "replace", "dev", "eth0",
+                    "root", "netem", "loss", "0%" };
+            execCommandInContainer(presenter, clear);
+        }
 
         // Stop recordings
         stopRecording(presenter);
         stopRecording(viewer);
 
+        String presenterRecordingName = PACKET_LOSS_PERCENTAGE + "-"
+                + PRESENTER_NAME + WEBM_EXT;
         File presenterRecording = getRecording(presenter,
-                PRESENTER_NAME + WEBM_EXT);
+                presenterRecordingName);
         assertTrue(presenterRecording.exists());
 
-        File viewerRecording = getRecording(viewer, VIEWER_NAME + WEBM_EXT);
+        String viewerRecordingName = PACKET_LOSS_PERCENTAGE + "-" + VIEWER_NAME
+                + WEBM_EXT;
+        File viewerRecording = getRecording(viewer, viewerRecordingName);
         assertTrue(viewerRecording.exists());
     }
 
