@@ -2,7 +2,7 @@
 
 VIDEO_SAMPLE_NAME=e-dv548_lwe08_christa_casebeer_003.mp4
 VIDEO_SAMPLE_URL=https://archive.org/download/e-dv548_lwe08_christa_casebeer_003.ogg/$VIDEO_SAMPLE_NAME
-VIDEO_DURATION_SEC=10
+VIDEO_DURATION=00:01:00
 PADDING_DURATION_SEC=5
 
 # 1. Download video sample from  https://archive.org/details/e-dv548_lwe08_christa_casebeer_003.ogg
@@ -15,7 +15,7 @@ else
 fi
 
 # 2. Cut original video
-ffmpeg -i e-dv548_lwe08_christa_casebeer_003.mp4 -ss 00:00:00 -t 00:00:$VIDEO_DURATION_SEC -c copy tmp.mp4
+ffmpeg -i e-dv548_lwe08_christa_casebeer_003.mp4 -ss 00:00:00 -t $VIDEO_DURATION -c copy tmp.mp4
 
 # 3. Create padding video based on a test pattern
 ffmpeg -f lavfi -i testsrc=duration=$PADDING_DURATION_SEC:size=540x360:rate=29.970 padding.mp4
