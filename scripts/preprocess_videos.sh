@@ -1,7 +1,7 @@
 #!/bin/bash
 
 FPS=24
-PREFFIX=0
+PREFFIX=40
 PRESENTER=$PREFFIX-presenter.webm
 VIEWER=$PREFFIX-viewer.webm
 TMP_PRESENTER=$PREFFIX-p.webm
@@ -66,7 +66,7 @@ fi
 #mediainfo $TMP_PRESENTER
 if [ ! -f $TMP_VIEWER ]; then
     echo Remuxing viewer
-    ffmpeg -y -r $FPS -i $PRESENTER $TMP_VIEWER
+    ffmpeg -y -r $FPS -i $VIEWER $TMP_VIEWER
 fi
 #mediainfo $TMP_VIEWER
 
@@ -75,10 +75,10 @@ fi
 # Extract images per frame (to find out change from padding to video and viceversa)
 
 # Uncomment this line to find out frames (from, to) and stop script
-# ffmpeg -i $TMP_PRESENTER $SOURCE_FOLDER/$JPG_FOLDER/p_%04d.jpg && exit 0
+#ffmpeg -i $TMP_PRESENTER $SOURCE_FOLDER/$JPG_FOLDER/p_%04d.jpg && exit 0
 
-CUT_PRESENTER_FRAME_FROM=146
-CUT_PRESENTER_FRAME_TO=1940
+CUT_PRESENTER_FRAME_FROM=144
+CUT_PRESENTER_FRAME_TO=1935
 CUT_PRESENTER_TIME_FROM=$(jq -n $CUT_PRESENTER_FRAME_FROM/$FPS)
 CUT_PRESENTER_TIME_TO=$(jq -n $CUT_PRESENTER_FRAME_TO/$FPS)
 CUT_PRESENTER_TIME=$(jq -n $CUT_PRESENTER_TIME_TO-$CUT_PRESENTER_TIME_FROM)
@@ -94,10 +94,10 @@ fi
 #mediainfo $CUT_PRESENTER
 
 # Uncomment this line to find out frames (from, to) and stop script
-# ffmpeg -i $TMP_VIEWER $SOURCE_FOLDER/$JPG_FOLDER/v_%04d.jpg && exit 0
+#ffmpeg -i $TMP_VIEWER $SOURCE_FOLDER/$JPG_FOLDER/v_%04d.jpg && exit 0
 
-CUT_VIEWER_FRAME_FROM=146
-CUT_VIEWER_FRAME_TO=1940
+CUT_VIEWER_FRAME_FROM=14
+CUT_VIEWER_FRAME_TO=440
 CUT_VIEWER_TIME_FROM=$(jq -n $CUT_VIEWER_FRAME_FROM/$FPS)
 CUT_VIEWER_TIME_TO=$(jq -n $CUT_VIEWER_FRAME_TO/$FPS)
 CUT_VIEWER_TIME=$(jq -n $CUT_VIEWER_TIME_TO-$CUT_VIEWER_TIME_FROM)
