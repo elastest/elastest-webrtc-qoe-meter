@@ -25,7 +25,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Optional;
 
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openqa.selenium.By;
@@ -73,9 +73,9 @@ public class OpenViduBasicConferencePacketLossTest
         this.viewer = viewer;
     }
 
-    @BeforeEach
-    void setup() throws Exception {
-        seleniumExtension.getConfig().setBrowserSessionTimeoutDuration("2m0s");
+    @BeforeAll
+    static void setupAll() {
+        seleniumExtension.getConfig().setBrowserSessionTimeoutDuration("5m0s");
     }
 
     private void execCommandInContainer(WebDriver driver, String[] command)
