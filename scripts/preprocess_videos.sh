@@ -1,7 +1,7 @@
 #!/bin/bash
 
 FPS=24
-PREFFIX=30
+PREFFIX=50
 PRESENTER=$PREFFIX-presenter.webm
 VIEWER=$PREFFIX-viewer.webm
 TMP_PRESENTER=$PREFFIX-p.webm
@@ -77,8 +77,8 @@ fi
 # Uncomment this line to find out frames (from, to) and stop script
 #ffmpeg -i $TMP_PRESENTER $SOURCE_FOLDER/$JPG_FOLDER/p_%04d.jpg && exit 0
 
-CUT_PRESENTER_FRAME_FROM=146
-CUT_PRESENTER_FRAME_TO=1938
+CUT_PRESENTER_FRAME_FROM=148
+CUT_PRESENTER_FRAME_TO=1943
 CUT_PRESENTER_TIME_FROM=$(jq -n $CUT_PRESENTER_FRAME_FROM/$FPS)
 CUT_PRESENTER_TIME_TO=$(jq -n $CUT_PRESENTER_FRAME_TO/$FPS)
 CUT_PRESENTER_TIME=$(jq -n $CUT_PRESENTER_TIME_TO-$CUT_PRESENTER_TIME_FROM)
@@ -96,8 +96,8 @@ fi
 # Uncomment this line to find out frames (from, to) and stop script
 #ffmpeg -i $TMP_VIEWER $SOURCE_FOLDER/$JPG_FOLDER/v_%04d.jpg && exit 0
 
-CUT_VIEWER_FRAME_FROM=67
-CUT_VIEWER_FRAME_TO=1164
+CUT_VIEWER_FRAME_FROM=2
+CUT_VIEWER_FRAME_TO=205
 CUT_VIEWER_TIME_FROM=$(jq -n $CUT_VIEWER_FRAME_FROM/$FPS)
 CUT_VIEWER_TIME_TO=$(jq -n $CUT_VIEWER_FRAME_TO/$FPS)
 CUT_VIEWER_TIME=$(jq -n $CUT_VIEWER_TIME_TO-$CUT_VIEWER_TIME_FROM)
@@ -108,7 +108,7 @@ if [ ! -f $CUT_VIEWER ]; then
     from=$retval
     duration $CUT_VIEWER_TIME
     to=$retval
-    ffmpeg -i $TMP_VIEWER -ss $from -t $to -c:v libvpx -c:a libvorbis -y $CUT_VIEWER
+    ffmpeg -i $TMP_VIEWER -ss $from -t $to -c:v libvpx -c:a libvorbis -y -max_muxing_queue_size 1024 $CUT_VIEWER
 fi
 #mediainfo $CUT_VIEWER
 
