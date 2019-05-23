@@ -1,7 +1,7 @@
 #!/bin/bash
 
 FPS=24
-PREFFIX=10
+PREFFIX=20
 PRESENTER=$PREFFIX-presenter.webm
 VIEWER=$PREFFIX-viewer.webm
 REMUXED_PRESENTER=$PREFFIX-remux-p.webm
@@ -77,40 +77,52 @@ fi
 # 3. Trim presenter and viewer (remove paddings)
 # Extract images per frame (to find out change from padding to video and viceversa)
 
-# Uncomment this line to find out frames (from, to) and stop script
-#ffmpeg -i $TMP_PRESENTER $SOURCE_FOLDER/$JPG_FOLDER/%04d-p.jpg && exit 0
+mkdir -p $SOURCE_FOLDER/$JPG_FOLDER
 
-CUT_PRESENTER_FRAME_FROM=106
-CUT_PRESENTER_FRAME_TO=1544
+CUT_PRESENTER_FRAME_FROM=114
+CUT_PRESENTER_FRAME_TO=1553
 CUT_PRESENTER_TIME_FROM=$(jq -n $CUT_PRESENTER_FRAME_FROM/$FPS)
 CUT_PRESENTER_TIME_TO=$(jq -n $CUT_PRESENTER_FRAME_TO/$FPS)
 CUT_PRESENTER_TIME=$(jq -n $CUT_PRESENTER_TIME_TO-$CUT_PRESENTER_TIME_FROM)
 
-if [ ! -f $CUT_PRESENTER ]; then
-    echo Cutting presentr
-    duration $CUT_PRESENTER_TIME_FROM
-    from=$retval
-    duration $CUT_PRESENTER_TIME
-    to=$retval
-    ffmpeg -i $TMP_PRESENTER -ss $from -t $to -c:v libvpx -c:a libvorbis -y $CUT_PRESENTER
+if [ "$(ls -A $SOURCE_FOLDER/$JPG_FOLDER)" ]; then
+    if [ ! -f $CUT_PRESENTER ]; then
+        rm $SOURCE_FOLDER/$JPG_FOLDER/*.jpg
+        echo Cutting presentr
+        duration $CUT_PRESENTER_TIME_FROM
+        from=$retval
+        duration $CUT_PRESENTER_TIME
+        to=$retval
+        ffmpeg -i $TMP_PRESENTER -ss $from -t $to -c:v libvpx -c:a libvorbis -y $CUT_PRESENTER
+    fi
+else
+    ffmpeg -i $TMP_PRESENTER $SOURCE_FOLDER/$JPG_FOLDER/%04d-p.jpg
+    echo "*** Check $SOURCE_FOLDER/$JPG_FOLDER folder and inspect frame in which media starts and end ***" 
+    echo "*** With that info, fill the variable CUT_PRESENTER_TIME_FROM and CUT_PRESENTER_FRAME_TO ***" 
+    exit 0
 fi
 
-# Uncomment this line to find out frames (from, to) and stop script
-#ffmpeg -i $TMP_VIEWER $SOURCE_FOLDER/$JPG_FOLDER/%04d-v.jpg && exit 0
-
-CUT_VIEWER_FRAME_FROM=45
-CUT_VIEWER_FRAME_TO=1487
+CUT_VIEWER_FRAME_FROM=110
+CUT_VIEWER_FRAME_TO=1548
 CUT_VIEWER_TIME_FROM=$(jq -n $CUT_VIEWER_FRAME_FROM/$FPS)
 CUT_VIEWER_TIME_TO=$(jq -n $CUT_VIEWER_FRAME_TO/$FPS)
 CUT_VIEWER_TIME=$(jq -n $CUT_VIEWER_TIME_TO-$CUT_VIEWER_TIME_FROM)
 
-if [ ! -f $CUT_VIEWER ]; then
-    echo Cutting presentr
-    duration $CUT_VIEWER_TIME_FROM
-    from=$retval
-    duration $CUT_VIEWER_TIME
-    to=$retval
-    ffmpeg -i $TMP_VIEWER -ss $from -t $to -c:v libvpx -c:a libvorbis -y -max_muxing_queue_size 1024 $CUT_VIEWER
+if [ "$(ls -A $SOURCE_FOLDER/$JPG_FOLDER)" ]; then
+    if [ ! -f $CUT_VIEWER ]; then
+        rm $SOURCE_FOLDER/$JPG_FOLDER/*.jpg
+        echo Cutting presentr
+        duration $CUT_VIEWER_TIME_FROM
+        from=$retval
+        duration $CUT_VIEWER_TIME
+        to=$retval
+        ffmpeg -i $TMP_VIEWER -ss $from -t $to -c:v libvpx -c:a libvorbis -y -max_muxing_queue_size 1024 $CUT_VIEWER
+    fi
+else
+    ffmpeg -i $TMP_VIEWER $SOURCE_FOLDER/$JPG_FOLDER/%04d-v.jpg
+    echo "*** Check $SOURCE_FOLDER/$JPG_FOLDER folder and inspect frame in which media starts and end ***" 
+    echo "*** With that info, fill the variable CUT_VIEWER_FRAME_FROM and CUT_VIEWER_FRAME_TO ***" 
+    exit 0
 fi
 
 # 4. Convert videos to yuv420p
