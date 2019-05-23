@@ -14,6 +14,8 @@ YUV_PRESENTER=$PREFFIX-p.yuv
 YUV_VIEWER=$PREFFIX-v.yuv
 JPG_FOLDER=jpg
 SOURCE_FOLDER=.
+WIDTH=640
+HEIGHT=480
 
 duration() {
     num=$1
@@ -122,7 +124,7 @@ fi
 
 # 5. Run VMAF
 echo "*** Run VMAF with the following command ***"
-echo ./run_vmaf yuv420p 540 360 "$PWD"/"$YUV_PRESENTER" "$PWD"/"$YUV_VIEWER" --out-fmt json ">" "$PWD"/"$PREFFIX"-vmaf.json
+echo ./run_vmaf yuv420p $WIDTH $HEIGHT "$PWD"/"$YUV_PRESENTER" "$PWD"/"$YUV_VIEWER" --out-fmt json ">" "$PWD"/"$PREFFIX"-vmaf.json
 echo
 echo "*** Transform VMAF JSON to CSV ***"
 echo "cat $PWD/$PREFFIX-vmaf.json | jq '.frames[].VMAF_score' > $PWD/$PREFFIX-vmaf.csv"
@@ -130,4 +132,4 @@ echo
 
 # 6. Run VQMT
 echo "*** Run VQMT with the following command ***"
-echo "./vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER 480 640 1500 1 0 PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM"
+echo "./vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 0 PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM"
