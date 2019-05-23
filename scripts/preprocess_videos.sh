@@ -1,9 +1,11 @@
 #!/bin/bash
 
 FPS=24
-PREFFIX=50
+PREFFIX=0
 PRESENTER=$PREFFIX-presenter.webm
 VIEWER=$PREFFIX-viewer.webm
+REMUXED_PRESENTER=$PREFFIX-remux-p.webm
+REMUXED_VIEWER=$PREFFIX-remux-v.webm
 TMP_PRESENTER=$PREFFIX-p.webm
 TMP_VIEWER=$PREFFIX-v.webm
 CUT_PRESENTER=$PREFFIX-p-cut.webm
@@ -61,24 +63,23 @@ fi
 # 2. Remux presenter and viewer with a fixed bitrate
 if [ ! -f $TMP_PRESENTER ]; then
     echo Remuxing presenter
-    ffmpeg -y -r $FPS -i $PRESENTER $TMP_PRESENTER
+    ffmpeg -y -i $PRESENTER $REMUXED_PRESENTER
+    ffmpeg -y -i $REMUXED_PRESENTER -filter:v "minterpolate='mi_mode=mci:mc_mode=aobmc:vsbmc=1:fps=$FPS'" $TMP_PRESENTER
 fi
-#mediainfo $TMP_PRESENTER
 if [ ! -f $TMP_VIEWER ]; then
-    echo Remuxing viewer
-    ffmpeg -y -r $FPS -i $VIEWER $TMP_VIEWER
+    echo  Remuxing viewer
+    ffmpeg -y -i $VIEWER $REMUXED_VIEWER
+    ffmpeg -y -i $REMUXED_VIEWER -filter:v "minterpolate='mi_mode=mci:mc_mode=aobmc:vsbmc=1:fps=$FPS'" $TMP_VIEWER
 fi
-#mediainfo $TMP_VIEWER
-
 
 # 3. Trim presenter and viewer (remove paddings)
 # Extract images per frame (to find out change from padding to video and viceversa)
 
 # Uncomment this line to find out frames (from, to) and stop script
-#ffmpeg -i $TMP_PRESENTER $SOURCE_FOLDER/$JPG_FOLDER/p_%04d.jpg && exit 0
+#ffmpeg -i $TMP_PRESENTER $SOURCE_FOLDER/$JPG_FOLDER/%04d-p.jpg && exit 0
 
-CUT_PRESENTER_FRAME_FROM=148
-CUT_PRESENTER_FRAME_TO=1943
+CUT_PRESENTER_FRAME_FROM=117
+CUT_PRESENTER_FRAME_TO=1555
 CUT_PRESENTER_TIME_FROM=$(jq -n $CUT_PRESENTER_FRAME_FROM/$FPS)
 CUT_PRESENTER_TIME_TO=$(jq -n $CUT_PRESENTER_FRAME_TO/$FPS)
 CUT_PRESENTER_TIME=$(jq -n $CUT_PRESENTER_TIME_TO-$CUT_PRESENTER_TIME_FROM)
@@ -91,13 +92,12 @@ if [ ! -f $CUT_PRESENTER ]; then
     to=$retval
     ffmpeg -i $TMP_PRESENTER -ss $from -t $to -c:v libvpx -c:a libvorbis -y $CUT_PRESENTER
 fi
-#mediainfo $CUT_PRESENTER
 
 # Uncomment this line to find out frames (from, to) and stop script
-#ffmpeg -i $TMP_VIEWER $SOURCE_FOLDER/$JPG_FOLDER/v_%04d.jpg && exit 0
+#ffmpeg -i $TMP_VIEWER $SOURCE_FOLDER/$JPG_FOLDER/%04d-v.jpg && exit 0
 
-CUT_VIEWER_FRAME_FROM=2
-CUT_VIEWER_FRAME_TO=205
+CUT_VIEWER_FRAME_FROM=104
+CUT_VIEWER_FRAME_TO=1543
 CUT_VIEWER_TIME_FROM=$(jq -n $CUT_VIEWER_FRAME_FROM/$FPS)
 CUT_VIEWER_TIME_TO=$(jq -n $CUT_VIEWER_FRAME_TO/$FPS)
 CUT_VIEWER_TIME=$(jq -n $CUT_VIEWER_TIME_TO-$CUT_VIEWER_TIME_FROM)
@@ -110,7 +110,6 @@ if [ ! -f $CUT_VIEWER ]; then
     to=$retval
     ffmpeg -i $TMP_VIEWER -ss $from -t $to -c:v libvpx -c:a libvorbis -y -max_muxing_queue_size 1024 $CUT_VIEWER
 fi
-#mediainfo $CUT_VIEWER
 
 # 4. Convert videos to yuv420p
 if [ ! -f $YUV_PRESENTER ]; then
@@ -122,6 +121,13 @@ if [ ! -f $YUV_VIEWER ]; then
 fi
 
 # 5. Run VMAF
-echo "Run VMAF with the following command:"
+echo "*** Run VMAF with the following command ***"
 echo ./run_vmaf yuv420p 540 360 "$PWD"/"$YUV_PRESENTER" "$PWD"/"$YUV_VIEWER" --out-fmt json ">" "$PWD"/"$PREFFIX"-vmaf.json
+echo
+echo "*** Transform VMAF JSON to CSV ***"
+echo "cat $PWD/$PREFFIX-vmaf.json | jq '.frames[].VMAF_score' > $PWD/$PREFFIX-vmaf.csv"
+echo
 
+# 6. Run VQMT
+echo "*** Run VQMT with the following command ***"
+echo "./vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER 480 640 1500 1 0 PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM"
