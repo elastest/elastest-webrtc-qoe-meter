@@ -136,11 +136,7 @@ fi
 
 # 5. Run VMAF
 echo "*** Run VMAF with the following command ***"
-echo ./run_vmaf yuv420p $WIDTH $HEIGHT "$PWD"/"$YUV_PRESENTER" "$PWD"/"$YUV_VIEWER" --out-fmt json ">" "$PWD"/"$PREFFIX"-vmaf.json
-echo
-echo "*** Transform VMAF JSON to CSV ***"
-echo "cat $PWD/$PREFFIX-vmaf.json | jq '.frames[].VMAF_score' > $PWD/$PREFFIX-vmaf.csv"
-echo
+echo ./run_vmaf yuv420p $WIDTH $HEIGHT "$PWD"/"$YUV_PRESENTER" "$PWD"/"$YUV_VIEWER" --out-fmt json ">" "$PWD"/"$PREFFIX"-vmaf.json "&&" "cat $PWD/$PREFFIX-vmaf.json | jq '.frames[].VMAF_score' > $PWD/$PREFFIX-vmaf.csv"
 
 # 6. Run VQMT
 echo "*** Run VQMT with the following command ***"
