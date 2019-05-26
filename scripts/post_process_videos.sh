@@ -4,13 +4,11 @@
 # Change these values manually according to the frames in which the actual video
 # (without the padding part, i.e. the lavfi video)
 ####################################################################################
-PREFFIX=0
-CUT_PRESENTER_FRAME_FROM=117
-PREFFIX=10
-CUT_PRESENTER_FRAME_FROM=106
-CUT_PRESENTER_FRAME_TO=1544
-CUT_VIEWER_FRAME_FROM=45
-CUT_VIEWER_FRAME_TO=1487
+PREFFIX=20
+CUT_PRESENTER_FRAME_FROM=114
+CUT_PRESENTER_FRAME_TO=1553
+CUT_VIEWER_FRAME_FROM=110
+CUT_VIEWER_FRAME_TO=1548
 ####################################################################################
 
 SOURCE_FOLDER=..
