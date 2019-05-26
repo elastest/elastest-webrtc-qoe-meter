@@ -6,9 +6,11 @@
 ####################################################################################
 PREFFIX=0
 CUT_PRESENTER_FRAME_FROM=117
-CUT_PRESENTER_FRAME_TO=1555
-CUT_VIEWER_FRAME_FROM=104
-CUT_VIEWER_FRAME_TO=1543
+PREFFIX=10
+CUT_PRESENTER_FRAME_FROM=106
+CUT_PRESENTER_FRAME_TO=1544
+CUT_VIEWER_FRAME_FROM=45
+CUT_VIEWER_FRAME_TO=1487
 ####################################################################################
 
 SOURCE_FOLDER=..
