@@ -49,7 +49,7 @@ public class OpenViduBasicConferencePacketLossTest
     final Logger log = getLogger(lookup().lookupClass());
 
     static final int TEST_TIME_SEC = 70;
-    static final int PACKET_LOSS_PERCENTAGE = 30;
+    static final int PACKET_LOSS_PERCENTAGE = 20;
 
     static final String FAKE_FILE_IN_CONTAINER = "--use-file-for-fake-video-capture=/home/selenium/test.y4m";
     static final String SUT_URL = "https://demos.openvidu.io/basic-videoconference/";

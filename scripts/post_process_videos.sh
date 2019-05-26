@@ -4,25 +4,26 @@
 # Change these values manually according to the frames in which the actual video
 # (without the padding part, i.e. the lavfi video)
 ####################################################################################
-PREFFIX=50
-CUT_PRESENTER_FRAME_FROM=112
-CUT_PRESENTER_FRAME_TO=1577
-CUT_VIEWER_FRAME_FROM=150
-CUT_VIEWER_FRAME_TO=1572
+DEFAULT_PREFIX=20
+CUT_PRESENTER_FRAME_FROM=117
+CUT_PRESENTER_FRAME_TO=1556
+CUT_VIEWER_FRAME_FROM=112
+CUT_VIEWER_FRAME_TO=1548
 ####################################################################################
 
+PREFIX=${1:-$DEFAULT_PREFIX}
 SOURCE_FOLDER=..
 FPS=24
-PRESENTER=$PREFFIX-presenter.webm
-VIEWER=$PREFFIX-viewer.webm
-REMUXED_PRESENTER=$PREFFIX-remux-p.webm
-REMUXED_VIEWER=$PREFFIX-remux-v.webm
-TMP_PRESENTER=$PREFFIX-p.webm
-TMP_VIEWER=$PREFFIX-v.webm
-CUT_PRESENTER=$PREFFIX-p-cut.webm
-CUT_VIEWER=$PREFFIX-v-cut.webm
-YUV_PRESENTER=$PREFFIX-p.yuv
-YUV_VIEWER=$PREFFIX-v.yuv
+PRESENTER=$PREFIX-presenter.webm
+VIEWER=$PREFIX-viewer.webm
+REMUXED_PRESENTER=$PREFIX-remux-p.webm
+REMUXED_VIEWER=$PREFIX-remux-v.webm
+TMP_PRESENTER=$PREFIX-p.webm
+TMP_VIEWER=$PREFIX-v.webm
+CUT_PRESENTER=$PREFIX-p-cut.webm
+CUT_VIEWER=$PREFIX-v-cut.webm
+YUV_PRESENTER=$PREFIX-p.yuv
+YUV_VIEWER=$PREFIX-v.yuv
 JPG_FOLDER=jpg
 WIDTH=640
 HEIGHT=480
@@ -142,8 +143,8 @@ fi
 
 # 5. Run VMAF
 echo "*** Run VMAF with the following command ***"
-echo ./run_vmaf yuv420p $WIDTH $HEIGHT "$PWD"/"$YUV_PRESENTER" "$PWD"/"$YUV_VIEWER" --out-fmt json ">" "$PWD"/"$PREFFIX"-vmaf.json "&&" "cat $PWD/$PREFFIX-vmaf.json | jq '.frames[].VMAF_score' > $PWD/$PREFFIX-vmaf.csv"
+echo ./run_vmaf yuv420p $WIDTH $HEIGHT "$PWD"/"$YUV_PRESENTER" "$PWD"/"$YUV_VIEWER" --out-fmt json ">" "$PWD"/"$PREFIX"-vmaf.json "&&" "cat $PWD/$PREFIX-vmaf.json | jq '.frames[].VMAF_score' > $PWD/$PREFIX-vmaf.csv"
 
 # 6. Run VQMT
 echo "*** Run VQMT with the following command ***"
-echo "./vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM"
+echo "./vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM"
