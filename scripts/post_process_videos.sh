@@ -1,7 +1,18 @@
 #!/bin/bash
 
-FPS=24
+####################################################################################
+# Change these values manually according to the frames in which the actual video
+# (without the padding part, i.e. the lavfi video)
+####################################################################################
 PREFFIX=30
+CUT_PRESENTER_FRAME_FROM=118
+CUT_PRESENTER_FRAME_TO=1557
+CUT_VIEWER_FRAME_FROM=116
+CUT_VIEWER_FRAME_TO=1551
+####################################################################################
+
+SOURCE_FOLDER=..
+FPS=24
 PRESENTER=$PREFFIX-presenter.webm
 VIEWER=$PREFFIX-viewer.webm
 REMUXED_PRESENTER=$PREFFIX-remux-p.webm
@@ -13,7 +24,6 @@ CUT_VIEWER=$PREFFIX-v-cut.webm
 YUV_PRESENTER=$PREFFIX-p.yuv
 YUV_VIEWER=$PREFFIX-v.yuv
 JPG_FOLDER=jpg
-SOURCE_FOLDER=.
 WIDTH=640
 HEIGHT=480
 
@@ -44,20 +54,20 @@ strindex() {
 }
 
 
-# 1. Copying presenter and viewer files to current folder
-if [ ! -f $SOURCE_FOLDER/$PRESENTER ]; then
-    echo $SOURCE_FOLDER/$PRESENTER does not exist
-    exit 1
-fi
-if [ ! -f $SOURCE_FOLDER/$VIEWER ]; then
-    echo $SOURCE_FOLDER/$VIEWER does not exist
-    exit 1
-fi
+# 1. Check presenter and viewer files and copying to current folder if not exist
 if [ ! -f $PRESENTER ]; then
+    if [ ! -f $SOURCE_FOLDER/$PRESENTER ]; then
+        echo $SOURCE_FOLDER/$PRESENTER does not exist
+        exit 1
+    fi
     echo Copying $PRESENTER
     cp $SOURCE_FOLDER/$PRESENTER .
 fi
 if [ ! -f $VIEWER ]; then
+    if [ ! -f $SOURCE_FOLDER/$VIEWER ]; then
+        echo $SOURCE_FOLDER/$VIEWER does not exist
+        exit 1
+    fi
     echo Copying $VIEWER
     cp $SOURCE_FOLDER/$VIEWER .
 fi
@@ -66,28 +76,26 @@ fi
 if [ ! -f $TMP_PRESENTER ]; then
     echo Remuxing presenter
     ffmpeg -y -i $PRESENTER $REMUXED_PRESENTER
-    ffmpeg -y -i $REMUXED_PRESENTER -filter:v "minterpolate='mi_mode=mci:mc_mode=aobmc:vsbmc=1:fps=$FPS'" $TMP_PRESENTER
+    ffmpeg -y -i $REMUXED_PRESENTER -filter:v "minterpolate='mi_mode=dup:fps=$FPS'" $TMP_PRESENTER
 fi
 if [ ! -f $TMP_VIEWER ]; then
     echo  Remuxing viewer
     ffmpeg -y -i $VIEWER $REMUXED_VIEWER
-    ffmpeg -y -i $REMUXED_VIEWER -filter:v "minterpolate='mi_mode=mci:mc_mode=aobmc:vsbmc=1:fps=$FPS'" $TMP_VIEWER
+    ffmpeg -y -i $REMUXED_VIEWER -filter:v "minterpolate='mi_mode=dup:fps=$FPS'" $TMP_VIEWER
 fi
 
 # 3. Trim presenter and viewer (remove paddings)
 # Extract images per frame (to find out change from padding to video and viceversa)
 
-mkdir -p $SOURCE_FOLDER/$JPG_FOLDER
+mkdir -p $JPG_FOLDER
 
-CUT_PRESENTER_FRAME_FROM=118
-CUT_PRESENTER_FRAME_TO=1557
 CUT_PRESENTER_TIME_FROM=$(jq -n $CUT_PRESENTER_FRAME_FROM/$FPS)
 CUT_PRESENTER_TIME_TO=$(jq -n $CUT_PRESENTER_FRAME_TO/$FPS)
 CUT_PRESENTER_TIME=$(jq -n $CUT_PRESENTER_TIME_TO-$CUT_PRESENTER_TIME_FROM)
 
-if [ "$(ls -A $SOURCE_FOLDER/$JPG_FOLDER)" ]; then
+if [ "$(ls -A $JPG_FOLDER)" ]; then
     if [ ! -f $CUT_PRESENTER ]; then
-        rm $SOURCE_FOLDER/$JPG_FOLDER/*.jpg
+        rm $JPG_FOLDER/*.jpg
         echo Cutting presentr
         duration $CUT_PRESENTER_TIME_FROM
         from=$retval
@@ -96,21 +104,19 @@ if [ "$(ls -A $SOURCE_FOLDER/$JPG_FOLDER)" ]; then
         ffmpeg -i $TMP_PRESENTER -ss $from -t $to -c:v libvpx -c:a libvorbis -y $CUT_PRESENTER
     fi
 else
-    ffmpeg -i $TMP_PRESENTER $SOURCE_FOLDER/$JPG_FOLDER/%04d-p.jpg
-    echo "*** Check $SOURCE_FOLDER/$JPG_FOLDER folder and inspect frame in which media starts and end ***" 
+    ffmpeg -i $TMP_PRESENTER $JPG_FOLDER/%04d-p.jpg
+    echo "*** Check $JPG_FOLDER folder and inspect frame in which media starts and end ***"
     echo "*** With that info, fill the variable CUT_PRESENTER_TIME_FROM and CUT_PRESENTER_FRAME_TO ***" 
     exit 0
 fi
 
-CUT_VIEWER_FRAME_FROM=116
-CUT_VIEWER_FRAME_TO=1551
 CUT_VIEWER_TIME_FROM=$(jq -n $CUT_VIEWER_FRAME_FROM/$FPS)
 CUT_VIEWER_TIME_TO=$(jq -n $CUT_VIEWER_FRAME_TO/$FPS)
 CUT_VIEWER_TIME=$(jq -n $CUT_VIEWER_TIME_TO-$CUT_VIEWER_TIME_FROM)
 
-if [ "$(ls -A $SOURCE_FOLDER/$JPG_FOLDER)" ]; then
+if [ "$(ls -A $JPG_FOLDER)" ]; then
     if [ ! -f $CUT_VIEWER ]; then
-        rm $SOURCE_FOLDER/$JPG_FOLDER/*.jpg
+        rm $JPG_FOLDER/*.jpg
         echo Cutting presentr
         duration $CUT_VIEWER_TIME_FROM
         from=$retval
@@ -119,8 +125,8 @@ if [ "$(ls -A $SOURCE_FOLDER/$JPG_FOLDER)" ]; then
         ffmpeg -i $TMP_VIEWER -ss $from -t $to -c:v libvpx -c:a libvorbis -y -max_muxing_queue_size 1024 $CUT_VIEWER
     fi
 else
-    ffmpeg -i $TMP_VIEWER $SOURCE_FOLDER/$JPG_FOLDER/%04d-v.jpg
-    echo "*** Check $SOURCE_FOLDER/$JPG_FOLDER folder and inspect frame in which media starts and end ***" 
+    ffmpeg -i $TMP_VIEWER $JPG_FOLDER/%04d-v.jpg
+    echo "*** Check $JPG_FOLDER folder and inspect frame in which media starts and end ***"
     echo "*** With that info, fill the variable CUT_VIEWER_FRAME_FROM and CUT_VIEWER_FRAME_TO ***" 
     exit 0
 fi
