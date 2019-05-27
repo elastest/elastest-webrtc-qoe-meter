@@ -97,7 +97,7 @@ CUT_PRESENTER_TIME=$(jq -n $CUT_PRESENTER_TIME_TO-$CUT_PRESENTER_TIME_FROM)
 if [ "$(ls -A $JPG_FOLDER)" ]; then
     if [ ! -f $CUT_PRESENTER ]; then
         rm $JPG_FOLDER/*.jpg
-        echo Cutting presentr
+        echo Cutting presenter
         duration $CUT_PRESENTER_TIME_FROM
         from=$retval
         duration $CUT_PRESENTER_TIME
@@ -118,7 +118,7 @@ CUT_VIEWER_TIME=$(jq -n $CUT_VIEWER_TIME_TO-$CUT_VIEWER_TIME_FROM)
 if [ "$(ls -A $JPG_FOLDER)" ]; then
     if [ ! -f $CUT_VIEWER ]; then
         rm $JPG_FOLDER/*.jpg
-        echo Cutting presentr
+        echo Cutting viewer
         duration $CUT_VIEWER_TIME_FROM
         from=$retval
         duration $CUT_VIEWER_TIME
