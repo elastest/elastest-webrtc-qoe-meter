@@ -45,3 +45,4 @@ buildNumber.properties
 *.y4m
 *.yuv
 *.jpg
+*.csv
