@@ -11,6 +11,14 @@ CUT_VIEWER_FRAME_FROM=112
 CUT_VIEWER_FRAME_TO=1548
 ####################################################################################
 
+####################################################################################
+# Fill these values with the binary path to VMAF and VQMT (compile from sources at
+# https://github.com/Netflix/vmaf and https://github.com/Rolinh/VQMT)
+####################################################################################
+VMAF_PATH=
+VQMT_PATH=
+####################################################################################
+
 PREFIX=${1:-$DEFAULT_PREFIX}
 SOURCE_FOLDER=..
 FPS=24
@@ -54,6 +62,16 @@ strindex() {
   retval=$([[ "$x" = "$1" ]] && echo -1 || echo "${#x}")
 }
 
+
+# 0. Check VMAF and VQMT path
+if [ -z "$VMAF_PATH" ]; then
+    echo "You need to provide the path to VMAF binaries (check out from https://github.com/Netflix/vmaf) in the variable VMAF_PATH"
+    exit 1
+fi
+if [ -z "$VQMT_PATH" ]; then
+    echo "You need to provide the path to VQMT binaries (check out from https://github.com/Rolinh/VQMT) in the variable VQMT_PATH"
+    exit 1
+fi
 
 # 1. Check presenter and viewer files and copying to current folder if not exist
 if [ ! -f $PRESENTER ]; then
@@ -141,10 +159,11 @@ if [ ! -f $YUV_VIEWER ]; then
 	ffmpeg -i $CUT_VIEWER -pix_fmt yuv420p -c:v rawvideo -an -y $YUV_VIEWER
 fi
 
-# 5. Run VMAF
-echo "*** Run VMAF with the following command ***"
-echo ./run_vmaf yuv420p $WIDTH $HEIGHT "$PWD"/"$YUV_PRESENTER" "$PWD"/"$YUV_VIEWER" --out-fmt json ">" "$PWD"/"$PREFIX"-vmaf.json "&&" "cat $PWD/$PREFIX-vmaf.json | jq '.frames[].VMAF_score' > $PWD/$PREFIX-vmaf.csv"
+# 5. Run VMAF and VQMT
+echo "Running VMAF ..."
+$VMAF_PATH/run_vmaf yuv420p $WIDTH $HEIGHT $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER --out-fmt json > $PWD/$PREFIX-vmaf.json && cat $PWD/$PREFIX-vmaf.json | jq '.frames[].VMAF_score' > $PWD/$PREFIX-vmaf.csv
 
-# 6. Run VQMT
-echo "*** Run VQMT with the following command ***"
-echo "./vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM"
+echo "Running VQMT ..."
+$VQMT_PATH/vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM
+
+echo "*** Post-process finished OK. Check CSV results at $PWD ***"
