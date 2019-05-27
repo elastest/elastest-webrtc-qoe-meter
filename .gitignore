@@ -46,3 +46,4 @@ buildNumber.properties
 *.yuv
 *.jpg
 *.csv
+*.json
