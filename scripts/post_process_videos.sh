@@ -61,16 +61,16 @@ if [ ! -f $PRESENTER ]; then
         echo $SOURCE_FOLDER/$PRESENTER does not exist
         exit 1
     fi
-    echo Copying $PRESENTER
-    cp $SOURCE_FOLDER/$PRESENTER .
+    echo Moving $PRESENTER
+    mv $SOURCE_FOLDER/$PRESENTER .
 fi
 if [ ! -f $VIEWER ]; then
     if [ ! -f $SOURCE_FOLDER/$VIEWER ]; then
         echo $SOURCE_FOLDER/$VIEWER does not exist
         exit 1
     fi
-    echo Copying $VIEWER
-    cp $SOURCE_FOLDER/$VIEWER .
+    echo Moving $VIEWER
+    mv $SOURCE_FOLDER/$VIEWER .
 fi
 
 # 2. Remux presenter and viewer with a fixed bitrate
