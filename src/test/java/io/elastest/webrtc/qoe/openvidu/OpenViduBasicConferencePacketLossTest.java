@@ -49,7 +49,6 @@ public class OpenViduBasicConferencePacketLossTest
     final Logger log = getLogger(lookup().lookupClass());
 
     static final int TEST_TIME_SEC = 70;
-    static final int PACKET_LOSS_PERCENTAGE = 20;
 
     static final String FAKE_FILE_IN_CONTAINER = "--use-file-for-fake-video-capture=/home/selenium/test.y4m";
     static final String SUT_URL = "https://demos.openvidu.io/basic-videoconference/";
@@ -58,15 +57,20 @@ public class OpenViduBasicConferencePacketLossTest
     static final String SESSION_NAME = "qoe-session";
     static final String WEBM_EXT = ".webm";
 
-    WebDriver presenter, viewer;
-    String path = "";
+    static final int PACKET_LOSS_PERCENTAGE = Integer
+            .parseInt(System.getProperty("packet.loss", "0"));
 
     // FIXME: Volume local path requires absolute path (where the file test.y4m
     // is stored in local)
+    static final String PROJECT_FOLDER = "/home/boni/Documents/dev/elastest-webrtc-qoe-meter";
+
+    WebDriver presenter, viewer;
+    String path = "";
+
     public OpenViduBasicConferencePacketLossTest(@Arguments({ FAKE_DEVICE,
             FAKE_UI,
             FAKE_FILE_IN_CONTAINER }) @DockerBrowser(type = CHROME, version = "beta", volumes = {
-                    "/home/boni/Documents/dev/elastest-webrtc-qoe-meter:/home/selenium" }) WebDriver presenter,
+                    PROJECT_FOLDER + ":/home/selenium" }) WebDriver presenter,
             @Arguments({ FAKE_DEVICE, FAKE_UI }) ChromeDriver viewer) {
         super(SUT_URL, presenter, viewer);
         this.presenter = presenter;
