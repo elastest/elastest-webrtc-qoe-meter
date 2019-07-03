@@ -17,7 +17,7 @@ In order to carry out this QoE assessment, a process made up by three stage is p
 
 1. Generate input video. This step is done using a the bash script [generate_input_video.sh].
 2. Run an automated test based on Selenium, JUnit, and Docker. This step is done using a test case, for example [OpenViduBasicConferencePacketLossTest].
-3. Calculate QoE metrics. This step is aimed to oost process video recordings and generate objective (VMAF, SSIM, PSNR, VIFp, etc) results using the bash script [calculate_qoe_metrics.sh].
+3. Calculate QoE metrics. This step is aimed to post process video recordings and generate objective (VMAF, SSIM, PSNR, VIFp, etc) results using the bash script [calculate_qoe_metrics.sh].
 
 This repository also contains the result data (objective and subjective) of a experiment done using [OpenVidu basic video conference demo] as System Under Test.
 
