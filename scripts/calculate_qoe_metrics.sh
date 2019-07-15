@@ -25,6 +25,7 @@ YUV_VIEWER=$PREFIX-v.yuv
 JPG_FOLDER=jpg
 WIDTH=640
 HEIGHT=480
+CLEANUP=true
 
 duration() {
     num=$1
@@ -220,7 +221,7 @@ if [ ! -f $PRESENTER ]; then
         exit 1
     fi
     echo Moving $PRESENTER
-    mv $SOURCE_FOLDER/$PRESENTER .
+    cp $SOURCE_FOLDER/$PRESENTER .
 fi
 if [ ! -f $VIEWER ]; then
     if [ ! -f $SOURCE_FOLDER/$VIEWER ]; then
@@ -228,7 +229,7 @@ if [ ! -f $VIEWER ]; then
         exit 1
     fi
     echo Moving $VIEWER
-    mv $SOURCE_FOLDER/$VIEWER .
+    cp $SOURCE_FOLDER/$VIEWER .
 fi
 
 # 2. Remux presenter and viewer with a fixed bitrate
@@ -346,3 +347,20 @@ echo "Running VQMT ..."
 $VQMT_PATH/vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM
 
 echo "*** Post-process finished OK. Check CSV results at $PWD ***"
+
+
+# 6. Cleanup
+if $CLEANUP; then
+    rm -rf $JPG_FOLDER
+    rm $PREFIX-vmaf.json
+    rm $REMUXED_PRESENTER
+    rm $REMUXED_VIEWER
+    rm $TMP_PRESENTER
+    rm $TMP_VIEWER
+    rm $YUV_PRESENTER
+    rm $YUV_VIEWER
+    rm $PRESENTER
+    rm $VIEWER   
+    rm $CUT_PRESENTER
+    rm $CUT_VIEWER
+fi
