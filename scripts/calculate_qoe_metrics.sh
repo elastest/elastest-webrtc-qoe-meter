@@ -26,6 +26,7 @@ JPG_FOLDER=jpg
 WIDTH=640
 HEIGHT=480
 CLEANUP=true
+FFMPEG_LOG="-loglevel panic"
 
 duration() {
     num=$1
@@ -204,6 +205,8 @@ match_image() {
 ####################################################################################
 ####################################################################################
 
+echo "*** Calculating QoE metrics (WebRTC $PREFIX% packet loss) ***"
+
 # 0. Check VMAF and VQMT path
 if [ -z "$VMAF_PATH" ]; then
     echo "You need to provide the path to VMAF binaries (check out from https://github.com/Netflix/vmaf) in the variable VMAF_PATH"
@@ -220,7 +223,7 @@ if [ ! -f $PRESENTER ]; then
         echo $SOURCE_FOLDER/$PRESENTER does not exist
         exit 1
     fi
-    echo Moving $PRESENTER
+    echo Copying presenter to current folder
     cp $SOURCE_FOLDER/$PRESENTER .
 fi
 if [ ! -f $VIEWER ]; then
@@ -228,20 +231,20 @@ if [ ! -f $VIEWER ]; then
         echo $SOURCE_FOLDER/$VIEWER does not exist
         exit 1
     fi
-    echo Moving $VIEWER
+    echo Copying viewer to current folder
     cp $SOURCE_FOLDER/$VIEWER .
 fi
 
 # 2. Remux presenter and viewer with a fixed bitrate
 if [ ! -f $TMP_PRESENTER ]; then
     echo Remuxing presenter
-    ffmpeg -y -i $PRESENTER $REMUXED_PRESENTER
-    ffmpeg -y -i $REMUXED_PRESENTER -filter:v "minterpolate='mi_mode=dup:fps=$FPS'" $TMP_PRESENTER
+    ffmpeg $FFMPEG_LOG -y -i $PRESENTER $REMUXED_PRESENTER
+    ffmpeg $FFMPEG_LOG -y -i $REMUXED_PRESENTER -filter:v "minterpolate='mi_mode=dup:fps=$FPS'" $TMP_PRESENTER
 fi
 if [ ! -f $TMP_VIEWER ]; then
     echo  Remuxing viewer
-    ffmpeg -y -i $VIEWER $REMUXED_VIEWER
-    ffmpeg -y -i $REMUXED_VIEWER -filter:v "minterpolate='mi_mode=dup:fps=$FPS'" $TMP_VIEWER
+    ffmpeg $FFMPEG_LOG -y -i $VIEWER $REMUXED_VIEWER
+    ffmpeg $FFMPEG_LOG -y -i $REMUXED_VIEWER -filter:v "minterpolate='mi_mode=dup:fps=$FPS'" $TMP_VIEWER
 fi
 
 # 3. Trim presenter and viewer (remove paddings)
@@ -251,11 +254,11 @@ mkdir -p $JPG_FOLDER
 
 if [ ! -f $CUT_PRESENTER ]; then
     p_suffix="-p.jpg"
-    ffmpeg -i $TMP_PRESENTER $JPG_FOLDER/%04d$p_suffix
+    ffmpeg $FFMPEG_LOG -i $TMP_PRESENTER $JPG_FOLDER/%04d$p_suffix
     jpgs=("$JPG_FOLDER/*$p_suffix")
     i_jpgs=$(ls -r $jpgs)
 
-    echo "Checking padding in presenter video ... please wait"
+    echo "Checking padding in presenter video"
     for i in $jpgs; do
         file=$(echo $i)
         match_image "$file"
@@ -276,7 +279,7 @@ if [ ! -f $CUT_PRESENTER ]; then
         fi
     done
 
-    echo "*** Cutting presenter from frame $CUT_PRESENTER_FRAME_FROM to $CUT_PRESENTER_FRAME_TO"
+    echo "Cutting presenter from frame $CUT_PRESENTER_FRAME_FROM to $CUT_PRESENTER_FRAME_TO"
 
     CUT_PRESENTER_TIME_FROM=$(jq -n $CUT_PRESENTER_FRAME_FROM/$FPS)
     CUT_PRESENTER_TIME_TO=$(jq -n $CUT_PRESENTER_FRAME_TO/$FPS)
@@ -286,17 +289,17 @@ if [ ! -f $CUT_PRESENTER ]; then
     from=$retval
     duration $CUT_PRESENTER_TIME
     to=$retval
-    ffmpeg -i $TMP_PRESENTER -ss $from -t $to -c:v libvpx -c:a libvorbis -y $CUT_PRESENTER
+    ffmpeg $FFMPEG_LOG -i $TMP_PRESENTER -ss $from -t $to -c:v libvpx -c:a libvorbis -y $CUT_PRESENTER
 fi
 
 
 if [ ! -f $CUT_VIEWER ]; then
     v_suffix="-v.jpg"
-    ffmpeg -i $TMP_VIEWER $JPG_FOLDER/%04d$v_suffix
+    ffmpeg $FFMPEG_LOG -i $TMP_VIEWER $JPG_FOLDER/%04d$v_suffix
     jpgs=("$JPG_FOLDER/*$v_suffix")
     i_jpgs=$(ls -r $jpgs)
 
-    echo "Checking padding in viewer video ... please wait"
+    echo "Checking padding in viewer video"
     for i in $jpgs; do
         file=$(echo $i)
         match_image "$file"
@@ -317,7 +320,7 @@ if [ ! -f $CUT_VIEWER ]; then
         fi
     done
 
-    echo "*** Cutting viewer from frame $CUT_VIEWER_FRAME_FROM to $CUT_VIEWER_FRAME_TO"
+    echo "Cutting viewer from frame $CUT_VIEWER_FRAME_FROM to $CUT_VIEWER_FRAME_TO"
 
     CUT_VIEWER_TIME_FROM=$(jq -n $CUT_VIEWER_FRAME_FROM/$FPS)
     CUT_VIEWER_TIME_TO=$(jq -n $CUT_VIEWER_FRAME_TO/$FPS)
@@ -327,30 +330,28 @@ if [ ! -f $CUT_VIEWER ]; then
     from=$retval
     duration $CUT_VIEWER_TIME
     to=$retval
-    ffmpeg -i $TMP_VIEWER -ss $from -t $to -c:v libvpx -c:a libvorbis -y -max_muxing_queue_size 1024 $CUT_VIEWER
+    ffmpeg $FFMPEG_LOG -i $TMP_VIEWER -ss $from -t $to -c:v libvpx -c:a libvorbis -y -max_muxing_queue_size 1024 $CUT_VIEWER
 fi
 
 # 4. Convert videos to yuv420p
 if [ ! -f $YUV_PRESENTER ]; then
-	ffmpeg -i $CUT_PRESENTER -pix_fmt yuv420p -c:v rawvideo -an -y $YUV_PRESENTER
+	ffmpeg $FFMPEG_LOG -i $CUT_PRESENTER -pix_fmt yuv420p -c:v rawvideo -an -y $YUV_PRESENTER
 fi
 
 if [ ! -f $YUV_VIEWER ]; then
-	ffmpeg -i $CUT_VIEWER -pix_fmt yuv420p -c:v rawvideo -an -y $YUV_VIEWER
+	ffmpeg $FFMPEG_LOG -i $CUT_VIEWER -pix_fmt yuv420p -c:v rawvideo -an -y $YUV_VIEWER
 fi
 
 # 5. Run VMAF and VQMT
-echo "Running VMAF ..."
+echo "Calculating VMAF"
 $VMAF_PATH/run_vmaf yuv420p $WIDTH $HEIGHT $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER --out-fmt json > $PWD/$PREFIX-vmaf.json && cat $PWD/$PREFIX-vmaf.json | jq '.frames[].VMAF_score' > $PWD/$PREFIX-vmaf.csv
 
-echo "Running VQMT ..."
-$VQMT_PATH/vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM
-
-echo "*** Post-process finished OK. Check CSV results at $PWD ***"
-
+echo "Calculating VIFp, SSIM, MS-SSIM, PSNR, PSNR-HVS, and PSNR-HVS-M"
+$VQMT_PATH/vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM >> /dev/null 2>&1
 
 # 6. Cleanup
 if $CLEANUP; then
+    echo "Removing temporal files"
     rm -rf $JPG_FOLDER
     rm $PREFIX-vmaf.json
     rm $REMUXED_PRESENTER
@@ -364,3 +365,5 @@ if $CLEANUP; then
     rm $CUT_PRESENTER
     rm $CUT_VIEWER
 fi
+
+echo "*** Process finished OK. Check CSV results at current folder ***"
