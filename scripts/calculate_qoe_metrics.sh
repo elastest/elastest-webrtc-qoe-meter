@@ -8,7 +8,7 @@ VMAF_PATH=
 VQMT_PATH=
 ####################################################################################
 
-DEFAULT_PREFIX=20
+DEFAULT_PREFIX=0
 PREFIX=${1:-$DEFAULT_PREFIX}
 SOURCE_FOLDER=..
 FPS=24
@@ -360,7 +360,7 @@ if $CLEANUP; then
     rm $YUV_PRESENTER
     rm $YUV_VIEWER
     rm $PRESENTER
-    rm $VIEWER   
+    rm $VIEWER
     rm $CUT_PRESENTER
     rm $CUT_VIEWER
 fi
