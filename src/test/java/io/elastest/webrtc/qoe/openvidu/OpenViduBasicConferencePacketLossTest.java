@@ -108,6 +108,9 @@ public class OpenViduBasicConferencePacketLossTest
         clearAndSendKeysToElementById(presenter, "sessionId", SESSION_NAME);
         presenter.findElement(By.name("commit")).click();
 
+        // Wait for session to be registered
+        Thread.sleep(2000);
+
         // Viewer
         log.debug("Viewer in {}", viewer);
         clearAndSendKeysToElementById(viewer, "userName", VIEWER_NAME);
