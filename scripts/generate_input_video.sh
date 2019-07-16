@@ -36,7 +36,7 @@ ffmpeg $FFMPEG_LOG -i padding.mp4 -i tmp.mp4 -i padding.mp4 -filter_complex conc
 
 # 5. Convert video to Y4M
 echo "Converting video to Y4M ($TARGET_VIDEO)"
-ffmpeg $FFMPEG_LOG -i test.mp4 -pix_fmt yuv420p $TARGET_VIDEO
+ffmpeg $FFMPEG_LOG -y -i test.mp4 -pix_fmt yuv420p $TARGET_VIDEO
 
 # 6. Delete temporal video files
 echo "Deleting temporal files"
