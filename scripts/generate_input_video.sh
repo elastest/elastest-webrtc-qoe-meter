@@ -9,6 +9,7 @@ HEIGHT=480
 FPS=24
 FFMPEG_LOG="-loglevel panic"
 TARGET_VIDEO=../test.y4m
+CLEANUP=true
 
 # 1. Download video sample from  https://archive.org/details/e-dv548_lwe08_christa_casebeer_003.ogg
 
@@ -39,5 +40,7 @@ echo "Converting video to Y4M ($TARGET_VIDEO)"
 ffmpeg $FFMPEG_LOG -y -i test.mp4 -pix_fmt yuv420p $TARGET_VIDEO
 
 # 6. Delete temporal video files
-echo "Deleting temporal files"
-rm tmp.mp4 padding.mp4 test.mp4
+if $CLEANUP; then
+    echo "Deleting temporal files"
+    rm tmp.mp4 padding.mp4 test.mp4
+fi
