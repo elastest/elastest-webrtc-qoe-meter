@@ -137,7 +137,7 @@ public class ElasTestRemoteControlParent {
             if (value != null) {
                 break;
             } else {
-                log.debug("{} not present still... waiting {} ms", property,
+                log.debug("{} still not present... waiting {} ms", property,
                         POLL_TIME_MS);
                 waitMilliSeconds(POLL_TIME_MS);
             }

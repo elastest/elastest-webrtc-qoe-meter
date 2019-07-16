@@ -103,11 +103,13 @@ public class OpenViduBasicConferencePacketLossTest
     @Test
     void openviduTest() throws Exception {
         // Presenter
+        log.debug("Presenter in {}", presenter);
         clearAndSendKeysToElementById(presenter, "userName", PRESENTER_NAME);
         clearAndSendKeysToElementById(presenter, "sessionId", SESSION_NAME);
         presenter.findElement(By.name("commit")).click();
 
         // Viewer
+        log.debug("Viewer in {}", viewer);
         clearAndSendKeysToElementById(viewer, "userName", VIEWER_NAME);
         clearAndSendKeysToElementById(viewer, "sessionId", SESSION_NAME);
         viewer.findElement(By.name("commit")).click();
