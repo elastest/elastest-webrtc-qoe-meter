@@ -60,17 +60,13 @@ public class OpenViduBasicConferencePacketLossTest
     static final int PACKET_LOSS_PERCENTAGE = Integer
             .parseInt(System.getProperty("packet.loss", "0"));
 
-    // FIXME: Volume local path requires absolute path (where the file test.y4m
-    // is stored in local)
-    static final String PROJECT_FOLDER = "/home/boni/Documents/dev/elastest-webrtc-qoe-meter";
-
     WebDriver presenter, viewer;
     String path = "";
 
     public OpenViduBasicConferencePacketLossTest(@Arguments({ FAKE_DEVICE,
             FAKE_UI,
             FAKE_FILE_IN_CONTAINER }) @DockerBrowser(type = CHROME, version = "beta", volumes = {
-                    PROJECT_FOLDER + ":/home/selenium" }) WebDriver presenter,
+                    "~:/home/selenium" }) WebDriver presenter,
             @Arguments({ FAKE_DEVICE, FAKE_UI }) ChromeDriver viewer) {
         super(SUT_URL, presenter, viewer);
         this.presenter = presenter;
