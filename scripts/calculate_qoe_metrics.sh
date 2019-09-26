@@ -1,13 +1,5 @@
 #!/bin/bash
 
-####################################################################################
-# Fill these values with the binary path to VMAF and VQMT (compile from sources at
-# https://github.com/Netflix/vmaf and https://github.com/Rolinh/VQMT)
-####################################################################################
-VMAF_PATH=
-VQMT_PATH=
-####################################################################################
-
 DEFAULT_PREFIX=0
 PREFIX=${1:-$DEFAULT_PREFIX}
 SOURCE_FOLDER=..
@@ -209,11 +201,11 @@ echo "*** Calculating QoE metrics (WebRTC $PREFIX% packet loss) ***"
 
 # 0. Check VMAF and VQMT path
 if [ -z "$VMAF_PATH" ]; then
-    echo "You need to provide the path to VMAF binaries (check out from https://github.com/Netflix/vmaf) in the variable VMAF_PATH"
+    echo "You need to provide the path to VMAF binaries (check out from https://github.com/Netflix/vmaf) in the environmental variable VMAF_PATH"
     exit 1
 fi
 if [ -z "$VQMT_PATH" ]; then
-    echo "You need to provide the path to VQMT binaries (check out from https://github.com/Rolinh/VQMT) in the variable VQMT_PATH"
+    echo "You need to provide the path to VQMT binaries (check out from https://github.com/Rolinh/VQMT) in the environmental variable VQMT_PATH"
     exit 1
 fi
 
