@@ -26,7 +26,7 @@ JPG_FOLDER=jpg
 WIDTH=640
 HEIGHT=480
 CLEANUP=true
-FFMPEG_LOG="-loglevel panic"
+FFMPEG_LOG="-loglevel error"
 
 duration() {
     num=$1
