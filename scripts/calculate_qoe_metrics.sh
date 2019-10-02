@@ -4,6 +4,7 @@ DEFAULT_PREFIX=0
 PREFIX=${1:-$DEFAULT_PREFIX}
 SOURCE_FOLDER=..
 FPS=24
+AUDIO_SAMPLE_RATE=16000
 PRESENTER=$PREFIX-presenter.webm
 VIEWER=$PREFIX-viewer.webm
 REMUXED_PRESENTER=$PREFIX-remux-p.webm
@@ -14,11 +15,14 @@ CUT_PRESENTER=$PREFIX-p-cut.webm
 CUT_VIEWER=$PREFIX-v-cut.webm
 YUV_PRESENTER=$PREFIX-p.yuv
 YUV_VIEWER=$PREFIX-v.yuv
+WAV_PRESENTER=$PREFIX-p.wav
+WAV_VIEWER=$PREFIX-v.wav
 JPG_FOLDER=jpg
 WIDTH=640
 HEIGHT=480
 CLEANUP=true
 FFMPEG_LOG="-loglevel error"
+CALCULATE_AUDIO_QOE=false
 
 duration() {
     num=$1
@@ -334,14 +338,32 @@ if [ ! -f $YUV_VIEWER ]; then
 	ffmpeg $FFMPEG_LOG -i $CUT_VIEWER -pix_fmt yuv420p -c:v rawvideo -an -y $YUV_VIEWER
 fi
 
-# 5. Run VMAF and VQMT
+# 5. Extract audio to wav
+if $CALCULATE_AUDIO_QOE && [ ! -f $WAV_PRESENTER ]; then
+    echo "Extracting WAV from presenter"
+	ffmpeg $FFMPEG_LOG -i $CUT_PRESENTER $WAV_PRESENTER
+	ffmpeg $FFMPEG_LOG -i $CUT_PRESENTER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_PRESENTER
+fi
+
+if $CALCULATE_AUDIO_QOE && [ ! -f $WAV_VIEWER ]; then
+	echo "Extracting WAV from viewer"
+	ffmpeg $FFMPEG_LOG -i $CUT_VIEWER $WAV_VIEWER
+	ffmpeg $FFMPEG_LOG -i $CUT_VIEWER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_VIEWER
+fi
+
+# 6. Run VMAF and VQMT
 echo "Calculating VMAF"
 $VMAF_PATH/run_vmaf yuv420p $WIDTH $HEIGHT $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER --out-fmt json > $PWD/$PREFIX-vmaf.json && cat $PWD/$PREFIX-vmaf.json | jq '.frames[].VMAF_score' > $PWD/$PREFIX-vmaf.csv
 
 echo "Calculating VIFp, SSIM, MS-SSIM, PSNR, PSNR-HVS, and PSNR-HVS-M"
 $VQMT_PATH/vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM >> /dev/null 2>&1
 
-# 6. Cleanup
+# 7. Run PESQ and ViSQOL
+if $CALCULATE_AUDIO_QOE; then
+	echo "TODO: run PESQ and ViSQOL"
+fi
+
+# 8. Cleanup
 if $CLEANUP; then
     echo "Removing temporal files"
     rm -rf $JPG_FOLDER
@@ -352,6 +374,8 @@ if $CLEANUP; then
     rm $TMP_VIEWER
     rm $YUV_PRESENTER
     rm $YUV_VIEWER
+    rm $WAV_PRESENTER
+    rm $WAV_VIEWER
     rm $PRESENTER
     rm $VIEWER
     rm $CUT_PRESENTER
