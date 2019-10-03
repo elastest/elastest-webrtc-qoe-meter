@@ -341,14 +341,14 @@ fi
 # 5. Extract audio to wav
 if $CALCULATE_AUDIO_QOE && [ ! -f $WAV_PRESENTER ]; then
     echo "Extracting WAV from presenter"
-	ffmpeg $FFMPEG_LOG -i $CUT_PRESENTER $WAV_PRESENTER
-	ffmpeg $FFMPEG_LOG -i $CUT_PRESENTER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_PRESENTER
+	ffmpeg $FFMPEG_LOG -y -i $CUT_PRESENTER $WAV_PRESENTER
+	ffmpeg $FFMPEG_LOG -y -i $CUT_PRESENTER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_PRESENTER
 fi
 
 if $CALCULATE_AUDIO_QOE && [ ! -f $WAV_VIEWER ]; then
 	echo "Extracting WAV from viewer"
-	ffmpeg $FFMPEG_LOG -i $CUT_VIEWER $WAV_VIEWER
-	ffmpeg $FFMPEG_LOG -i $CUT_VIEWER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_VIEWER
+	ffmpeg $FFMPEG_LOG -y -i $CUT_VIEWER $WAV_VIEWER
+	ffmpeg $FFMPEG_LOG -y -i $CUT_VIEWER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_VIEWER
 fi
 
 # 6. Run VMAF and VQMT
