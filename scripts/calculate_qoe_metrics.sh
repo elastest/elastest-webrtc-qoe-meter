@@ -360,7 +360,25 @@ $VQMT_PATH/vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREF
 
 # 7. Run PESQ and ViSQOL
 if $CALCULATE_AUDIO_QOE; then
-	echo "TODO: run PESQ and ViSQOL"
+	ORIG_PWD=$PWD
+
+	if [ -z "$PESQ_PATH" ]; then
+	    echo "You need to provide the path to PESQ binaries (https://github.com/dennisguse/ITU-T_pesq) in the environmental variable PESQ_PATH"
+	else
+		echo "Calculating PESQ"
+		cd $PESQ_PATH
+		./pesq +$AUDIO_SAMPLE_RATE $ORIG_PWD/resampled_$WAV_PRESENTER $ORIG_PWD/resampled_$WAV_VIEWER | tail -n 1 > $ORIG_PWD/$PREFIX-pesq.txt
+	fi
+
+	if [ -z "$VISQOL_PATH" ]; then
+	    echo "You need to provide the path to ViSQOL binaries (https://sites.google.com/a/tcd.ie/sigmedia/) in the environmental variable VISQOL_PATH"
+	else
+		echo "Calculating ViSQOL"
+		cd $VISQOL_PATH
+		./bazel-bin/visqol --reference_file $ORIG_PWD/$WAV_PRESENTER --degraded_file $ORIG_PWD/$WAV_VIEWER --verbose | grep MOS-LQO > $ORIG_PWD/$PREFIX-visqol.txt
+	fi
+
+	cd $ORIG_PWD
 fi
 
 # 8. Cleanup
@@ -382,4 +400,8 @@ if $CLEANUP; then
     rm $CUT_VIEWER
 fi
 
-echo "*** Process finished OK. Check CSV results at current folder ***"
+if $CALCULATE_AUDIO_QOE; then
+	echo "*** Process finished OK. Check CSV results for video and TXT for audio at current folder ***"
+else
+	echo "*** Process finished OK. Check CSV results at current folder ***"
+fi
