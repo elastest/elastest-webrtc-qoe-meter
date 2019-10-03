@@ -22,8 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -32,8 +30,6 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.slf4j.Logger;
-
-import com.spotify.docker.client.exceptions.DockerException;
 
 import io.elastest.webrtc.qoe.ElasTestRemoteControlParent;
 import io.github.bonigarcia.seljup.Arguments;
@@ -78,24 +74,6 @@ public class OpenViduBasicConferencePacketLossTest
         seleniumExtension.getConfig().setBrowserSessionTimeoutDuration("5m0s");
     }
 
-    private void execCommandInContainer(WebDriver driver, String[] command)
-            throws DockerException, InterruptedException {
-        Optional<String> containerId = seleniumExtension.getContainerId(driver);
-        if (containerId.isPresent()) {
-            String container = containerId.get();
-            log.debug("Running {} in container {}", Arrays.toString(command),
-                    container);
-
-            String result = seleniumExtension.getDockerService()
-                    .execCommandInContainer(container, command);
-            if (result != null) {
-                log.debug("Result: {}", result);
-            }
-        } else {
-            log.warn("Container not present in {}", driver);
-        }
-    }
-
     @Test
     void openviduTest() throws Exception {
         // Presenter
@@ -121,19 +99,16 @@ public class OpenViduBasicConferencePacketLossTest
 
         if (PACKET_LOSS_PERCENTAGE > 0) {
             // Simulate packet loss in viewer container
-            String[] tc = { "sudo", "tc", "qdisc", "replace", "dev", "eth0",
-                    "root", "netem", "loss", PACKET_LOSS_PERCENTAGE + "%" };
-            execCommandInContainer(presenter, tc);
+            simulateNetwork(seleniumExtension, presenter, "loss",
+                    PACKET_LOSS_PERCENTAGE);
         }
 
         // Wait
         waitSeconds(TEST_TIME_SEC);
 
         if (PACKET_LOSS_PERCENTAGE > 0) {
-            // Clear packet loss
-            String[] clear = { "sudo", "tc", "qdisc", "replace", "dev", "eth0",
-                    "root", "netem", "loss", "0%" };
-            execCommandInContainer(presenter, clear);
+            // Reset packet loss
+            resetNetwork(seleniumExtension, presenter, "loss");
         }
 
         // Stop recordings

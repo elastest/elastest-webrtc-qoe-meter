@@ -23,8 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -33,8 +31,6 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.slf4j.Logger;
-
-import com.spotify.docker.client.exceptions.DockerException;
 
 import io.elastest.webrtc.qoe.ElasTestRemoteControlParent;
 import io.github.bonigarcia.seljup.Arguments;
@@ -81,24 +77,6 @@ public class OpenViduBasicConferencePacketLossAudioVideoTest
         seleniumExtension.getConfig().setBrowserSessionTimeoutDuration("5m0s");
     }
 
-    private void execCommandInContainer(WebDriver driver, String[] command)
-            throws DockerException, InterruptedException {
-        Optional<String> containerId = seleniumExtension.getContainerId(driver);
-        if (containerId.isPresent()) {
-            String container = containerId.get();
-            log.debug("Running {} in container {}", Arrays.toString(command),
-                    container);
-
-            String result = seleniumExtension.getDockerService()
-                    .execCommandInContainer(container, command);
-            if (result != null) {
-                log.debug("Result: {}", result);
-            }
-        } else {
-            log.warn("Container not present in {}", driver);
-        }
-    }
-
     @Test
     void openviduTest() throws Exception {
         // Presenter
@@ -124,7 +102,7 @@ public class OpenViduBasicConferencePacketLossAudioVideoTest
 
         if (TC_VALUE > 0) {
             // Simulate packet loss or delay or jitter in viewer container
-            simulateNetwork(presenter);
+            simulateNetwork(seleniumExtension, presenter, TC_TYPE, TC_VALUE);
         }
 
         // Wait
@@ -132,7 +110,7 @@ public class OpenViduBasicConferencePacketLossAudioVideoTest
 
         if (TC_VALUE > 0) {
             // Reset network
-            resetNetwork(presenter);
+            resetNetwork(seleniumExtension, presenter, TC_TYPE);
         }
 
         // Stop recordings
@@ -149,52 +127,6 @@ public class OpenViduBasicConferencePacketLossAudioVideoTest
                 + WEBM_EXT;
         File viewerRecording = getRecording(viewer, viewerRecordingName);
         assertTrue(viewerRecording.exists());
-    }
-
-    private void simulateNetwork(WebDriver driver)
-            throws DockerException, InterruptedException {
-        // Simulate network conditions using NetEm
-        String[] tc;
-
-        switch (TC_TYPE.toLowerCase()) {
-        case "delay":
-            tc = new String[] { "sudo", "tc", "qdisc", "add", "dev", "eth0",
-                    "root", "netem", "delay", TC_VALUE + "ms" };
-            break;
-        case "jitter":
-            tc = new String[] { "sudo", "tc", "qdisc", "add", "dev", "eth0",
-                    "root", "netem", "delay", TC_VALUE + "ms", TC_VALUE + "ms",
-                    "distribution", "normal" };
-            break;
-        case "loss":
-        default:
-            tc = new String[] { "sudo", "tc", "qdisc", "add", "dev", "eth0",
-                    "root", "netem", "loss", TC_VALUE + "%" };
-            break;
-        }
-
-        execCommandInContainer(driver, tc);
-    }
-
-    private void resetNetwork(WebDriver driver)
-            throws DockerException, InterruptedException {
-        // Reset network using NetEm
-        String[] tc;
-
-        switch (TC_TYPE.toLowerCase()) {
-        case "delay":
-        case "jitter":
-            tc = new String[] { "sudo", "tc", "qdisc", "replace", "dev", "eth0",
-                    "root", "netem", "delay", "0ms", "0ms" };
-            break;
-        case "loss":
-        default:
-            tc = new String[] { "sudo", "tc", "qdisc", "replace", "dev", "eth0",
-                    "root", "netem", "loss", "0%" };
-            break;
-        }
-
-        execCommandInContainer(driver, tc);
     }
 
 }

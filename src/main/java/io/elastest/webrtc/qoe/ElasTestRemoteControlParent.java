@@ -38,12 +38,17 @@ import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
+
+import com.spotify.docker.client.exceptions.DockerException;
+
+import io.github.bonigarcia.seljup.SeleniumExtension;
 
 public class ElasTestRemoteControlParent {
 
@@ -262,6 +267,73 @@ public class ElasTestRemoteControlParent {
         WebElement userName = driver.findElement(By.id(id));
         userName.clear();
         userName.sendKeys(keys);
+    }
+
+    public void execCommandInContainer(SeleniumExtension seleniumExtension,
+            WebDriver driver, String[] command)
+            throws DockerException, InterruptedException {
+        Optional<String> containerId = seleniumExtension.getContainerId(driver);
+        if (containerId.isPresent()) {
+            String container = containerId.get();
+            log.debug("Running {} in container {}", Arrays.toString(command),
+                    container);
+
+            String result = seleniumExtension.getDockerService()
+                    .execCommandInContainer(container, command);
+            if (result != null) {
+                log.debug("Result: {}", result);
+            }
+        } else {
+            log.warn("Container not present in {}", driver);
+        }
+    }
+
+    // Simulate network conditions using NetEm
+    public void simulateNetwork(SeleniumExtension seleniumExtension,
+            WebDriver driver, String tcType, int tcValue)
+            throws DockerException, InterruptedException {
+        String[] tcCommand;
+
+        switch (tcType.toLowerCase()) {
+        case "delay":
+            tcCommand = new String[] { "sudo", "tc", "qdisc", "add", "dev",
+                    "eth0", "root", "netem", "delay", tcValue + "ms" };
+            break;
+        case "jitter":
+            tcCommand = new String[] { "sudo", "tc", "qdisc", "add", "dev",
+                    "eth0", "root", "netem", "delay", tcValue + "ms",
+                    tcValue + "ms", "distribution", "normal" };
+            break;
+        case "loss":
+        default:
+            tcCommand = new String[] { "sudo", "tc", "qdisc", "add", "dev",
+                    "eth0", "root", "netem", "loss", tcValue + "%" };
+            break;
+        }
+
+        execCommandInContainer(seleniumExtension, driver, tcCommand);
+    }
+
+    // Reset network using NetEm
+    public void resetNetwork(SeleniumExtension seleniumExtension,
+            WebDriver driver, String tcType)
+            throws DockerException, InterruptedException {
+        String[] tcCommand;
+
+        switch (tcType.toLowerCase()) {
+        case "delay":
+        case "jitter":
+            tcCommand = new String[] { "sudo", "tc", "qdisc", "replace", "dev",
+                    "eth0", "root", "netem", "delay", "0ms", "0ms" };
+            break;
+        case "loss":
+        default:
+            tcCommand = new String[] { "sudo", "tc", "qdisc", "replace", "dev",
+                    "eth0", "root", "netem", "loss", "0%" };
+            break;
+        }
+
+        execCommandInContainer(seleniumExtension, driver, tcCommand);
     }
 
 }
