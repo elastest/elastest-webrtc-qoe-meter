@@ -22,7 +22,7 @@ WIDTH=640
 HEIGHT=480
 FFMPEG_LOG="-loglevel error"
 CALCULATE_AUDIO_QOE=false
-CLEANUP=false
+CLEANUP=true
 
 duration() {
     num=$1
