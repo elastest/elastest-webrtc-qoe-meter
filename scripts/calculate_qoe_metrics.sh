@@ -331,24 +331,24 @@ fi
 
 # 4. Convert videos to yuv420p
 if [ ! -f $YUV_PRESENTER ]; then
-	ffmpeg $FFMPEG_LOG -i $CUT_PRESENTER -pix_fmt yuv420p -c:v rawvideo -an -y $YUV_PRESENTER
+    ffmpeg $FFMPEG_LOG -i $CUT_PRESENTER -pix_fmt yuv420p -c:v rawvideo -an -y $YUV_PRESENTER
 fi
 
 if [ ! -f $YUV_VIEWER ]; then
-	ffmpeg $FFMPEG_LOG -i $CUT_VIEWER -pix_fmt yuv420p -c:v rawvideo -an -y $YUV_VIEWER
+    ffmpeg $FFMPEG_LOG -i $CUT_VIEWER -pix_fmt yuv420p -c:v rawvideo -an -y $YUV_VIEWER
 fi
 
 # 5. Extract audio to wav
 if $CALCULATE_AUDIO_QOE && [ ! -f $WAV_PRESENTER ]; then
     echo "Extracting WAV from presenter"
-	ffmpeg $FFMPEG_LOG -y -i $CUT_PRESENTER $WAV_PRESENTER
-	ffmpeg $FFMPEG_LOG -y -i $CUT_PRESENTER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_PRESENTER
+    ffmpeg $FFMPEG_LOG -y -i $CUT_PRESENTER $WAV_PRESENTER
+    ffmpeg $FFMPEG_LOG -y -i $CUT_PRESENTER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_PRESENTER
 fi
 
 if $CALCULATE_AUDIO_QOE && [ ! -f $WAV_VIEWER ]; then
-	echo "Extracting WAV from viewer"
-	ffmpeg $FFMPEG_LOG -y -i $CUT_VIEWER $WAV_VIEWER
-	ffmpeg $FFMPEG_LOG -y -i $CUT_VIEWER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_VIEWER
+    echo "Extracting WAV from viewer"
+    ffmpeg $FFMPEG_LOG -y -i $CUT_VIEWER $WAV_VIEWER
+    ffmpeg $FFMPEG_LOG -y -i $CUT_VIEWER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_VIEWER
 fi
 
 # 6. Run VMAF and VQMT
@@ -360,25 +360,25 @@ $VQMT_PATH/vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREF
 
 # 7. Run PESQ and ViSQOL
 if $CALCULATE_AUDIO_QOE; then
-	ORIG_PWD=$PWD
+    ORIG_PWD=$PWD
 
-	if [ -z "$PESQ_PATH" ]; then
-	    echo "You need to provide the path to PESQ binaries (https://github.com/dennisguse/ITU-T_pesq) in the environmental variable PESQ_PATH"
-	else
-		echo "Calculating PESQ"
-		cd $PESQ_PATH
-		./pesq +$AUDIO_SAMPLE_RATE $ORIG_PWD/resampled_$WAV_PRESENTER $ORIG_PWD/resampled_$WAV_VIEWER | tail -n 1 > $ORIG_PWD/$PREFIX-pesq.txt
-	fi
+    if [ -z "$PESQ_PATH" ]; then
+        echo "You need to provide the path to PESQ binaries (https://github.com/dennisguse/ITU-T_pesq) in the environmental variable PESQ_PATH"
+    else
+        echo "Calculating PESQ"
+        cd $PESQ_PATH
+        ./pesq +$AUDIO_SAMPLE_RATE $ORIG_PWD/resampled_$WAV_PRESENTER $ORIG_PWD/resampled_$WAV_VIEWER | tail -n 1 > $ORIG_PWD/$PREFIX-pesq.txt
+    fi
 
-	if [ -z "$VISQOL_PATH" ]; then
-	    echo "You need to provide the path to ViSQOL binaries (https://sites.google.com/a/tcd.ie/sigmedia/) in the environmental variable VISQOL_PATH"
-	else
-		echo "Calculating ViSQOL"
-		cd $VISQOL_PATH
-		./bazel-bin/visqol --reference_file $ORIG_PWD/$WAV_PRESENTER --degraded_file $ORIG_PWD/$WAV_VIEWER --verbose | grep MOS-LQO > $ORIG_PWD/$PREFIX-visqol.txt
-	fi
+    if [ -z "$VISQOL_PATH" ]; then
+        echo "You need to provide the path to ViSQOL binaries (https://sites.google.com/a/tcd.ie/sigmedia/) in the environmental variable VISQOL_PATH"
+    else
+        echo "Calculating ViSQOL"
+        cd $VISQOL_PATH
+        ./bazel-bin/visqol --reference_file $ORIG_PWD/$WAV_PRESENTER --degraded_file $ORIG_PWD/$WAV_VIEWER --verbose | grep MOS-LQO > $ORIG_PWD/$PREFIX-visqol.txt
+    fi
 
-	cd $ORIG_PWD
+    cd $ORIG_PWD
 fi
 
 # 8. Cleanup
@@ -401,7 +401,7 @@ if $CLEANUP; then
 fi
 
 if $CALCULATE_AUDIO_QOE; then
-	echo "*** Process finished OK. Check CSV results for video and TXT for audio at current folder ***"
+    echo "*** Process finished OK. Check CSV results for video and TXT for audio at current folder ***"
 else
-	echo "*** Process finished OK. Check CSV results at current folder ***"
+    echo "*** Process finished OK. Check CSV results at current folder ***"
 fi
