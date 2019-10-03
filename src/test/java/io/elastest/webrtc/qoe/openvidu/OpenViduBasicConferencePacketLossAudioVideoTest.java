@@ -17,6 +17,7 @@
 package io.elastest.webrtc.qoe.openvidu;
 
 import static io.github.bonigarcia.seljup.BrowserType.CHROME;
+import static java.lang.Integer.parseInt;
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -58,8 +59,9 @@ public class OpenViduBasicConferencePacketLossAudioVideoTest
     static final String SESSION_NAME = "qoe-session";
     static final String WEBM_EXT = ".webm";
 
-    static final int PACKET_LOSS_PERCENTAGE = Integer
-            .parseInt(System.getProperty("packet.loss", "0"));
+    // The following values are valid: loss, delay, jitter
+    static final String TC_TYPE = System.getProperty("tc.type", "loss");
+    static final int TC_VALUE = parseInt(System.getProperty("tc.value", "0"));
 
     WebDriver presenter, viewer;
     String path = "";
@@ -120,37 +122,79 @@ public class OpenViduBasicConferencePacketLossAudioVideoTest
         startRecording(viewer,
                 "session.streamManagers[0].stream.webRtcPeer.pc.getRemoteStreams()[0]");
 
-        if (PACKET_LOSS_PERCENTAGE > 0) {
-            // Simulate packet loss in viewer container
-            String[] tc = { "sudo", "tc", "qdisc", "replace", "dev", "eth0",
-                    "root", "netem", "loss", PACKET_LOSS_PERCENTAGE + "%" };
-            execCommandInContainer(presenter, tc);
+        if (TC_VALUE > 0) {
+            // Simulate packet loss or delay or jitter in viewer container
+            simulateNetwork(presenter);
         }
 
         // Wait
         waitSeconds(TEST_TIME_SEC);
 
-        if (PACKET_LOSS_PERCENTAGE > 0) {
-            // Clear packet loss
-            String[] clear = { "sudo", "tc", "qdisc", "replace", "dev", "eth0",
-                    "root", "netem", "loss", "0%" };
-            execCommandInContainer(presenter, clear);
+        if (TC_VALUE > 0) {
+            // Reset network
+            resetNetwork(presenter);
         }
 
         // Stop recordings
         stopRecording(presenter);
         stopRecording(viewer);
 
-        String presenterRecordingName = PACKET_LOSS_PERCENTAGE + "-"
+        String presenterRecordingName = TC_VALUE + TC_TYPE + "-"
                 + PRESENTER_NAME + WEBM_EXT;
         File presenterRecording = getRecording(presenter,
                 presenterRecordingName);
         assertTrue(presenterRecording.exists());
 
-        String viewerRecordingName = PACKET_LOSS_PERCENTAGE + "-" + VIEWER_NAME
+        String viewerRecordingName = TC_VALUE + TC_TYPE + "-" + VIEWER_NAME
                 + WEBM_EXT;
         File viewerRecording = getRecording(viewer, viewerRecordingName);
         assertTrue(viewerRecording.exists());
+    }
+
+    private void simulateNetwork(WebDriver driver)
+            throws DockerException, InterruptedException {
+        // Simulate network conditions using NetEm
+        String[] tc;
+
+        switch (TC_TYPE.toLowerCase()) {
+        case "delay":
+            tc = new String[] { "sudo", "tc", "qdisc", "add", "dev", "eth0",
+                    "root", "netem", "delay", TC_VALUE + "ms" };
+            break;
+        case "jitter":
+            tc = new String[] { "sudo", "tc", "qdisc", "add", "dev", "eth0",
+                    "root", "netem", "delay", TC_VALUE + "ms", TC_VALUE + "ms",
+                    "distribution", "normal" };
+            break;
+        case "loss":
+        default:
+            tc = new String[] { "sudo", "tc", "qdisc", "add", "dev", "eth0",
+                    "root", "netem", "loss", TC_VALUE + "%" };
+            break;
+        }
+
+        execCommandInContainer(driver, tc);
+    }
+
+    private void resetNetwork(WebDriver driver)
+            throws DockerException, InterruptedException {
+        // Reset network using NetEm
+        String[] tc;
+
+        switch (TC_TYPE.toLowerCase()) {
+        case "delay":
+        case "jitter":
+            tc = new String[] { "sudo", "tc", "qdisc", "replace", "dev", "eth0",
+                    "root", "netem", "delay", "0ms", "0ms" };
+            break;
+        case "loss":
+        default:
+            tc = new String[] { "sudo", "tc", "qdisc", "replace", "dev", "eth0",
+                    "root", "netem", "loss", "0%" };
+            break;
+        }
+
+        execCommandInContainer(driver, tc);
     }
 
 }
