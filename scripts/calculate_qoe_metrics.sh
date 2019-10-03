@@ -394,6 +394,8 @@ if $CLEANUP; then
     rm $YUV_VIEWER
     rm $WAV_PRESENTER
     rm $WAV_VIEWER
+    rm resampled_$WAV_PRESENTER
+    rm resampled_$WAV_VIEWER
     rm $PRESENTER
     rm $VIEWER
     rm $CUT_PRESENTER
