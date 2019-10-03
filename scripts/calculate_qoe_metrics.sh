@@ -20,9 +20,9 @@ WAV_VIEWER=$PREFIX-v.wav
 JPG_FOLDER=jpg
 WIDTH=640
 HEIGHT=480
-CLEANUP=true
 FFMPEG_LOG="-loglevel error"
 CALCULATE_AUDIO_QOE=false
+CLEANUP=false
 
 duration() {
     num=$1
