@@ -37,7 +37,7 @@ import io.github.bonigarcia.seljup.Arguments;
 import io.github.bonigarcia.seljup.DockerBrowser;
 import io.github.bonigarcia.seljup.SeleniumExtension;
 
-public class OpenViduBasicConferencePacketLossAudioVideoTest
+public class OpenViduBasicConferenceAudioVideoTest
         extends ElasTestRemoteControlParent {
 
     @RegisterExtension
@@ -62,7 +62,7 @@ public class OpenViduBasicConferencePacketLossAudioVideoTest
     WebDriver presenter, viewer;
     String path = "";
 
-    public OpenViduBasicConferencePacketLossAudioVideoTest(@Arguments({
+    public OpenViduBasicConferenceAudioVideoTest(@Arguments({
             FAKE_DEVICE, FAKE_UI, FAKE_VIDEO,
             FAKE_AUDIO }) @DockerBrowser(type = CHROME, version = "beta", volumes = {
                     "~:/home/selenium" }) WebDriver presenter,
