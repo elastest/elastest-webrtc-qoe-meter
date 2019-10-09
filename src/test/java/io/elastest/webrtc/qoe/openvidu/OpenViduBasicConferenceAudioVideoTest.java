@@ -62,8 +62,8 @@ public class OpenViduBasicConferenceAudioVideoTest
     WebDriver presenter, viewer;
     String path = "";
 
-    public OpenViduBasicConferenceAudioVideoTest(@Arguments({
-            FAKE_DEVICE, FAKE_UI, FAKE_VIDEO,
+    public OpenViduBasicConferenceAudioVideoTest(@Arguments({ FAKE_DEVICE,
+            FAKE_UI, FAKE_VIDEO,
             FAKE_AUDIO }) @DockerBrowser(type = CHROME, version = "beta", volumes = {
                     "~:/home/selenium" }) WebDriver presenter,
             @Arguments({ FAKE_DEVICE, FAKE_UI }) ChromeDriver viewer) {
