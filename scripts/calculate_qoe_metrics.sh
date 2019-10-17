@@ -12,6 +12,7 @@ HEIGHT=${3:-$DEFAULT_HEIGHT}
 SOURCE_FOLDER=..
 FPS=24
 AUDIO_SAMPLE_RATE=16000
+VIDEO_BITRATE=3M
 PRESENTER=$PREFIX-presenter.webm
 VIEWER=$PREFIX-viewer.webm
 REMUXED_PRESENTER=$PREFIX-remux-p.webm
@@ -243,12 +244,12 @@ fi
 # 2. Remux presenter and viewer with a fixed bitrate
 if [ ! -f $TMP_PRESENTER ]; then
     echo Remuxing presenter
-    ffmpeg $FFMPEG_LOG -y -i $PRESENTER -s ${WIDTH}x${HEIGHT} $REMUXED_PRESENTER
+    ffmpeg $FFMPEG_LOG -y -i $PRESENTER -s ${WIDTH}x${HEIGHT} -c:v libvpx -quality best -cpu-used 0 -b:v $VIDEO_BITRATE -pix_fmt yuv420p $REMUXED_PRESENTER
     ffmpeg $FFMPEG_LOG -y -i $REMUXED_PRESENTER -filter:v "minterpolate='mi_mode=dup:fps=$FPS'" $TMP_PRESENTER
 fi
 if [ ! -f $TMP_VIEWER ]; then
     echo  Remuxing viewer
-    ffmpeg $FFMPEG_LOG -y -i $VIEWER -s ${WIDTH}x${HEIGHT} $REMUXED_VIEWER
+    ffmpeg $FFMPEG_LOG -y -i $VIEWER -s ${WIDTH}x${HEIGHT} -c:v libvpx -quality best -cpu-used 0 -b:v $VIDEO_BITRATE -pix_fmt yuv420p $REMUXED_VIEWER
     ffmpeg $FFMPEG_LOG -y -i $REMUXED_VIEWER -filter:v "minterpolate='mi_mode=dup:fps=$FPS'" $TMP_VIEWER
 fi
 
@@ -294,7 +295,7 @@ if [ ! -f $CUT_PRESENTER ]; then
     from=$retval
     duration $CUT_PRESENTER_TIME
     to=$retval
-    ffmpeg $FFMPEG_LOG -i $TMP_PRESENTER -ss $from -t $to -c:v libvpx -c:a libvorbis -y $CUT_PRESENTER
+    ffmpeg $FFMPEG_LOG -i $TMP_PRESENTER -ss $from -t $to -c:v libvpx -quality best -cpu-used 0 -b:v $VIDEO_BITRATE -pix_fmt yuv420p -y $CUT_PRESENTER
 fi
 
 
@@ -335,7 +336,7 @@ if [ ! -f $CUT_VIEWER ]; then
     from=$retval
     duration $CUT_VIEWER_TIME
     to=$retval
-    ffmpeg $FFMPEG_LOG -i $TMP_VIEWER -ss $from -t $to -c:v libvpx -c:a libvorbis -y -max_muxing_queue_size 1024 $CUT_VIEWER
+    ffmpeg $FFMPEG_LOG -i $TMP_VIEWER -ss $from -t $to -c:v libvpx -quality best -cpu-used 0 -b:v $VIDEO_BITRATE -pix_fmt yuv420p -y $CUT_VIEWER
 fi
 
 # 4. Convert videos to yuv420p
