@@ -166,37 +166,41 @@ match_color() {
 }
 
 # Expected values for lavfi padding video: width,height rgb(r,g,b) [color]:
-# 60,240  rgb(255,255,255) [white]
 # 120,240 rgb(0,255,255)  [cyan]
 # 200,240 rgb(255,0,253) [purple]
 # 280,240 rgb(0,0,253) [blue]
 # 360,240 rgb(253,255,0) [yellow]
 # 420,240 rgb(0,255,0) [green]
 # 500,240 rgb(253,0,0) [red]
-# 580,240 rgb(0,0,0) [black]
 match_image() {
    image=$1
    threshold=50
-   height=240
 
-   match_color $image 60 $height $threshold 255 255 255
-   match_white=$retval
-   match_color $image 120 $height $threshold 0 255 255
+   height=$(($HEIGHT / 3))
+   bar=$(($WIDTH / 8))
+   halfbar=$(($bar / 2))
+
+   cyan=$((halfbar + ($bar * 1)))
+   purple=$((halfbar + ($bar * 2)))
+   blue=$((halfbar + ($bar * 3)))
+   yellow=$((halfbar + ($bar * 4)))
+   green=$((halfbar + ($bar * 5)))
+   red=$((halfbar + ($bar * 6)))
+
+   match_color $image $cyan $height $threshold 0 255 255
    match_cyan=$retval
-   match_color $image 200 $height $threshold 255 0 255
+   match_color $image $purple $height $threshold 255 0 255
    match_purple=$retval
-   match_color $image 280 $height $threshold 0 0 255
+   match_color $image $blue $height $threshold 0 0 255
    match_blue=$retval
-   match_color $image 360 $height $threshold 255 255 0
+   match_color $image $yellow $height $threshold 255 255 0
    match_yellow=$retval
-   match_color $image 420 $height $threshold 0 255 0
+   match_color $image $green $height $threshold 0 255 0
    match_green=$retval
-   match_color $image 500 $height $threshold 255 0 0
+   match_color $image $red $height $threshold 255 0 0
    match_red=$retval
-   match_color $image 580 $height $threshold 0 0 0
-   match_black=$retval
 
-   if $match_black && $match_cyan && $match_purple && $match_blue && $match_yellow && $match_red && $match_black; then
+   if $match_cyan && $match_purple && $match_blue && $match_yellow && $match_red; then
       retval=true
    else
       retval=false
@@ -239,12 +243,12 @@ fi
 # 2. Remux presenter and viewer with a fixed bitrate
 if [ ! -f $TMP_PRESENTER ]; then
     echo Remuxing presenter
-    ffmpeg $FFMPEG_LOG -y -i $PRESENTER $REMUXED_PRESENTER
+    ffmpeg $FFMPEG_LOG -y -i $PRESENTER -s ${WIDTH}x${HEIGHT} $REMUXED_PRESENTER
     ffmpeg $FFMPEG_LOG -y -i $REMUXED_PRESENTER -filter:v "minterpolate='mi_mode=dup:fps=$FPS'" $TMP_PRESENTER
 fi
 if [ ! -f $TMP_VIEWER ]; then
     echo  Remuxing viewer
-    ffmpeg $FFMPEG_LOG -y -i $VIEWER $REMUXED_VIEWER
+    ffmpeg $FFMPEG_LOG -y -i $VIEWER -s ${WIDTH}x${HEIGHT} $REMUXED_VIEWER
     ffmpeg $FFMPEG_LOG -y -i $REMUXED_VIEWER -filter:v "minterpolate='mi_mode=dup:fps=$FPS'" $TMP_VIEWER
 fi
 
