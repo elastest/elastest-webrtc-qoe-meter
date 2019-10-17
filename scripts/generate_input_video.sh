@@ -15,9 +15,9 @@ TARGET_VIDEO=../test.y4m
 TARGET_AUDIO=../test.wav
 CLEANUP=true
 
-# 1. Download video sample from  https://archive.org/details/e-dv548_lwe08_christa_casebeer_003.ogg
+# 1. Download video sample
 
-if [ ! -f $VIDEO_SAMPLE_NAME ]; then
+if [ ! -f "$VIDEO_SAMPLE_NAME" ]; then
     echo "Content video ($VIDEO_SAMPLE_NAME) not exits ... downloading"
     wget $VIDEO_SAMPLE_URL
 else
@@ -26,7 +26,7 @@ fi
 
 # 2. Cut original video
 echo "Cutting original video (duration $VIDEO_DURATION)"
-ffmpeg $FFMPEG_LOG -i e-dv548_lwe08_christa_casebeer_003.mp4 -ss 00:00:00 -t $VIDEO_DURATION -vf scale="$WIDTH:$HEIGHT",setsar=1:1 -r $FPS tmp.mp4
+ffmpeg $FFMPEG_LOG -i "$VIDEO_SAMPLE_NAME" -ss 00:00:00 -t $VIDEO_DURATION -vf scale="$WIDTH:$HEIGHT",setsar=1:1 -r $FPS tmp.mp4
 
 
 # 3. Create padding video based on a test pattern
