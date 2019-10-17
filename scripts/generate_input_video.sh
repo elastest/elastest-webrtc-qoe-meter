@@ -1,7 +1,7 @@
 #!/bin/sh
 
-VIDEO_SAMPLE_NAME=e-dv548_lwe08_christa_casebeer_003.mp4
-VIDEO_SAMPLE_URL=https://archive.org/download/e-dv548_lwe08_christa_casebeer_003.ogg/$VIDEO_SAMPLE_NAME
+VIDEO_SAMPLE_URL=https://archive.org/download/e-dv548_lwe08_christa_casebeer_003.ogg/e-dv548_lwe08_christa_casebeer_003.mp4
+VIDEO_SAMPLE_NAME=${VIDEO_SAMPLE_URL##*/}
 VIDEO_DURATION=00:01:00
 PADDING_DURATION_SEC=5
 WIDTH=640
