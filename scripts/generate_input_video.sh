@@ -1,11 +1,18 @@
 #!/bin/sh
 
+# Video 1. Conversational (640x480)
 VIDEO_SAMPLE_URL=https://archive.org/download/e-dv548_lwe08_christa_casebeer_003.ogg/e-dv548_lwe08_christa_casebeer_003.mp4
-VIDEO_SAMPLE_NAME=$(echo ${VIDEO_SAMPLE_URL##*/} | sed -e 's/%20/ /g')
-VIDEO_DURATION=00:01:00
-PADDING_DURATION_SEC=5
 WIDTH=640
 HEIGHT=480
+
+# Video 2. Gaming (1280x720)
+#VIDEO_SAMPLE_URL=https://ia802808.us.archive.org/6/items/ForniteBattle8/fornite%20battle%202.mp4
+#WIDTH=1280
+#HEIGHT=720
+
+VIDEO_SAMPLE_NAME=$(echo ${VIDEO_SAMPLE_URL##*/} | sed -e 's/%20/ /g')
+VIDEO_DURATION=00:00:35
+PADDING_DURATION_SEC=5
 FPS=24
 TONE_FREQUENCY_HZ=1000
 AUDIO_SAMPLE_RATE_HZ=44100
