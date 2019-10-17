@@ -45,7 +45,7 @@ public class OpenViduBasicConferenceAudioVideoTest
 
     final Logger log = getLogger(lookup().lookupClass());
 
-    static final int TEST_TIME_SEC = 70;
+    static final int TEST_TIME_SEC = 35;
 
     static final String FAKE_VIDEO = "--use-file-for-fake-video-capture=/home/selenium/test.y4m";
     static final String FAKE_AUDIO = "--use-file-for-fake-audio-capture=/home/selenium/test.wav";
@@ -56,7 +56,7 @@ public class OpenViduBasicConferenceAudioVideoTest
     static final String WEBM_EXT = ".webm";
 
     // The following values are valid: loss, delay, jitter
-    static final String TC_TYPE = System.getProperty("tc.type", "loss");
+    static final String TC_TYPE = System.getProperty("tc.type", "");
     static final int TC_VALUE = parseInt(System.getProperty("tc.value", "0"));
 
     WebDriver presenter, viewer;
