@@ -45,7 +45,7 @@ CLEANUP=true
 cleanup() {
     echo "Removing temporal files"
     rm -rf $JPG_FOLDER \
-        $PREFIX-vmaf.json \
+        ${PREFIX}_vmaf.json \
         $REMUXED_PRESENTER $REMUXED_VIEWER \
         $TMP_PRESENTER $TMP_VIEWER \
         $YUV_PRESENTER $YUV_VIEWER \
@@ -375,13 +375,13 @@ fi
 
 
 # 5. Extract audio to wav
-if $CALCULATE_AUDIO_QOE && [ ! -f $WAV_PRESENTER ]; then
+if $CALCULATE_AUDIO_QOE || $EXTRA_ALIGNMENT && [ ! -f $WAV_PRESENTER ]; then
     echo "Extracting WAV from presenter"
     ffmpeg $FFMPEG_LOG -y -i $CUT_PRESENTER $WAV_PRESENTER
     ffmpeg $FFMPEG_LOG -y -i $CUT_PRESENTER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_PRESENTER
 fi
 
-if $CALCULATE_AUDIO_QOE && [ ! -f $WAV_VIEWER ]; then
+if $CALCULATE_AUDIO_QOE || $EXTRA_ALIGNMENT && [ ! -f $WAV_VIEWER ]; then
     echo "Extracting WAV from viewer"
     ffmpeg $FFMPEG_LOG -y -i $CUT_VIEWER $WAV_VIEWER
     ffmpeg $FFMPEG_LOG -y -i $CUT_VIEWER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_VIEWER
@@ -436,7 +436,7 @@ fi
 
 # 8. Run VMAF and VQMT
 echo "Calculating VMAF"
-$VMAF_PATH/run_vmaf yuv420p $WIDTH $HEIGHT $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER --out-fmt json > $PWD/$PREFIX-vmaf.json && cat $PWD/$PREFIX-vmaf.json | jq '.frames[].VMAF_score' > $PWD/$PREFIX-vmaf.csv
+$VMAF_PATH/run_vmaf yuv420p $WIDTH $HEIGHT $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER --out-fmt json > $PWD/${PREFIX}_vmaf.json && cat $PWD/$PREFIX_vmaf.json | jq '.frames[].VMAF_score' > $PWD/${PREFIX}_vmaf.csv
 
 echo "Calculating VIFp, SSIM, MS-SSIM, PSNR, PSNR-HVS, and PSNR-HVS-M"
 $VQMT_PATH/vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM >> /dev/null 2>&1
@@ -450,7 +450,7 @@ if $CALCULATE_AUDIO_QOE; then
     else
         echo "Calculating PESQ"
         cd $PESQ_PATH
-        ./pesq +$AUDIO_SAMPLE_RATE $ORIG_PWD/resampled_$WAV_PRESENTER $ORIG_PWD/resampled_$WAV_VIEWER | tail -n 1 > $ORIG_PWD/$PREFIX_pesq.txt
+        ./pesq +$AUDIO_SAMPLE_RATE $ORIG_PWD/resampled_$WAV_PRESENTER $ORIG_PWD/resampled_$WAV_VIEWER | tail -n 1 > $ORIG_PWD/${PREFIX}_pesq.txt
     fi
 
     if [ -z "$VISQOL_PATH" ]; then
@@ -458,7 +458,7 @@ if $CALCULATE_AUDIO_QOE; then
     else
         echo "Calculating ViSQOL"
         cd $VISQOL_PATH
-        ./bazel-bin/visqol --reference_file $ORIG_PWD/$WAV_PRESENTER --degraded_file $ORIG_PWD/$WAV_VIEWER --verbose | grep MOS-LQO > $ORIG_PWD/$PREFIX_visqol.txt
+        ./bazel-bin/visqol --reference_file $ORIG_PWD/$WAV_PRESENTER --degraded_file $ORIG_PWD/$WAV_VIEWER --verbose | grep MOS-LQO > $ORIG_PWD/${PREFIX}_visqol.txt
     fi
 
     cd $ORIG_PWD
