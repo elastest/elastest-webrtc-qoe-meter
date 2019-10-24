@@ -389,7 +389,6 @@ fi
 
 
 # 6. Optional fine-grained alignment
-
 if $EXTRA_ALIGNMENT && [ ! -f $P_TMP_3 ]; then
     echo Fine-grained alignment in presenter
 
@@ -436,7 +435,7 @@ fi
 
 # 8. Run VMAF and VQMT
 echo "Calculating VMAF"
-$VMAF_PATH/run_vmaf yuv420p $WIDTH $HEIGHT $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER --out-fmt json > $PWD/${PREFIX}_vmaf.json && cat $PWD/$PREFIX_vmaf.json | jq '.frames[].VMAF_score' > $PWD/${PREFIX}_vmaf.csv
+$VMAF_PATH/run_vmaf yuv420p $WIDTH $HEIGHT $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER --out-fmt json > $PWD/${PREFIX}_vmaf.json && cat $PWD/${PREFIX}_vmaf.json | jq '.frames[].VMAF_score' > $PWD/${PREFIX}_vmaf.csv
 
 echo "Calculating VIFp, SSIM, MS-SSIM, PSNR, PSNR-HVS, and PSNR-HVS-M"
 $VQMT_PATH/vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM >> /dev/null 2>&1
