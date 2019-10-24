@@ -42,6 +42,19 @@ YUV_PROFILE=yuv420p
 FFMPEG_OPTIONS="-c:v libvpx -quality best -cpu-used 0 -b:v $VIDEO_BITRATE -pix_fmt $YUV_PROFILE"
 CLEANUP=true
 
+cleanup() {
+    echo "Removing temporal files"
+    rm -rf $JPG_FOLDER \
+        $PREFIX-vmaf.json \
+        $REMUXED_PRESENTER $REMUXED_VIEWER \
+        $TMP_PRESENTER $TMP_VIEWER \
+        $YUV_PRESENTER $YUV_VIEWER \
+        $WAV_PRESENTER $WAV_VIEWER resampled_$WAV_PRESENTER resampled_$WAV_VIEWER \
+        $PRESENTER $VIEWER \
+        $CUT_PRESENTER $CUT_VIEWER \
+        $P_TMP_1 $P_TMP_2 $P_TMP_3 $V_TMP_1 $V_TMP_2 $V_TMP_3
+}
+
 duration() {
     num=$1
     decimals=
@@ -225,7 +238,18 @@ match_image() {
 
 echo "*** Calculating QoE metrics (WebRTC $PREFIX% packet loss) ***"
 
-# 0. Check VMAF and VQMT path
+# 0. Optional cleanup
+if [ "$WIDTH" == "clean" ]; then
+    cleanup
+    exit 0
+fi
+if [ "$WIDTH" == "clean-all" ]; then
+    cleanup
+    rm $PREFIX_*.csv $PREFIX_*.txt 2>/dev/null
+    exit 0
+fi
+
+# 1. Check VMAF and VQMT path
 if [ -z "$VMAF_PATH" ]; then
     echo "You need to provide the path to VMAF binaries (check out from https://github.com/Netflix/vmaf) in the environmental variable VMAF_PATH"
     exit 1
@@ -235,7 +259,7 @@ if [ -z "$VQMT_PATH" ]; then
     exit 1
 fi
 
-# 1. Check presenter and viewer files and copying to current folder if not exist
+# 2. Check presenter and viewer files and copying to current folder if not exist
 if [ ! -f $PRESENTER ]; then
     if [ ! -f $SOURCE_FOLDER/$PRESENTER ]; then
         echo $SOURCE_FOLDER/$PRESENTER does not exist
@@ -253,7 +277,7 @@ if [ ! -f $VIEWER ]; then
     cp $SOURCE_FOLDER/$VIEWER .
 fi
 
-# 2. Remux presenter and viewer with a fixed bitrate
+# 3. Remux presenter and viewer with a fixed bitrate
 if [ ! -f $TMP_PRESENTER ]; then
     echo Remuxing presenter
     ffmpeg $FFMPEG_LOG -y -i $PRESENTER -s ${WIDTH}x${HEIGHT} $FFMPEG_OPTIONS $REMUXED_PRESENTER
@@ -350,7 +374,7 @@ if [ ! -f $CUT_VIEWER ]; then
 fi
 
 
-# 4. Extract audio to wav
+# 5. Extract audio to wav
 if $CALCULATE_AUDIO_QOE && [ ! -f $WAV_PRESENTER ]; then
     echo "Extracting WAV from presenter"
     ffmpeg $FFMPEG_LOG -y -i $CUT_PRESENTER $WAV_PRESENTER
@@ -364,7 +388,7 @@ if $CALCULATE_AUDIO_QOE && [ ! -f $WAV_VIEWER ]; then
 fi
 
 
-# 5. Optional fine-grained alignment
+# 6. Optional fine-grained alignment
 
 if $EXTRA_ALIGNMENT && [ ! -f $P_TMP_3 ]; then
     echo Fine-grained alignment in presenter
@@ -398,7 +422,7 @@ else
     V_TMP_3=$CUT_VIEWER
 fi
 
-# 6. Convert videos to YUV_PROFILE
+# 7. Convert videos to YUV_PROFILE
 if [ ! -f $YUV_PRESENTER ]; then
     echo Converting presenter to $YUV_PROFILE
     ffmpeg $FFMPEG_LOG -i $P_TMP_3 -pix_fmt $YUV_PROFILE -c:v rawvideo -an -y $YUV_PRESENTER
@@ -410,14 +434,14 @@ if [ ! -f $YUV_VIEWER ]; then
 fi
 
 
-# 7. Run VMAF and VQMT
+# 8. Run VMAF and VQMT
 echo "Calculating VMAF"
 $VMAF_PATH/run_vmaf yuv420p $WIDTH $HEIGHT $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER --out-fmt json > $PWD/$PREFIX-vmaf.json && cat $PWD/$PREFIX-vmaf.json | jq '.frames[].VMAF_score' > $PWD/$PREFIX-vmaf.csv
 
 echo "Calculating VIFp, SSIM, MS-SSIM, PSNR, PSNR-HVS, and PSNR-HVS-M"
 $VQMT_PATH/vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM >> /dev/null 2>&1
 
-# 8. Run PESQ and ViSQOL
+# 9. Run PESQ and ViSQOL
 if $CALCULATE_AUDIO_QOE; then
     ORIG_PWD=$PWD
 
@@ -440,18 +464,9 @@ if $CALCULATE_AUDIO_QOE; then
     cd $ORIG_PWD
 fi
 
-# 9. Cleanup
+# 10. Cleanup
 if $CLEANUP; then
-    echo "Removing temporal files"
-    rm -rf $JPG_FOLDER \
-    $PREFIX-vmaf.json \
-    $REMUXED_PRESENTER $REMUXED_VIEWER \
-    $TMP_PRESENTER $TMP_VIEWER \
-    $YUV_PRESENTER $YUV_VIEWER \
-    $WAV_PRESENTER $WAV_VIEWER resampled_$WAV_PRESENTER resampled_$WAV_VIEWER \
-    $PRESENTER $VIEWER \
-    $CUT_PRESENTER $CUT_VIEWER \
-    $P_TMP_1 $P_TMP_2 $P_TMP_3 $V_TMP_1 $V_TMP_2 $V_TMP_3
+    cleanup
 fi
 
 if $CALCULATE_AUDIO_QOE; then
