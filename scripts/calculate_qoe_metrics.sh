@@ -25,9 +25,21 @@ YUV_PRESENTER=$PREFIX-p.yuv
 YUV_VIEWER=$PREFIX-v.yuv
 WAV_PRESENTER=$PREFIX-p.wav
 WAV_VIEWER=$PREFIX-v.wav
+P_TMP_1=tmp_p_1.mkv
+P_TMP_2=tmp_p_2.mkv
+P_TMP_3=tmp_p_3.mkv
+V_TMP_1=tmp_v_1.mkv
+V_TMP_2=tmp_v_2.mkv
+V_TMP_3=tmp_v_3.mkv
 JPG_FOLDER=jpg
 FFMPEG_LOG="-loglevel error"
 CALCULATE_AUDIO_QOE=false
+EXTRA_ALIGNMENT=false
+P_SUFFIX="-p.jpg"
+V_SUFFIX="-v.jpg"
+VIDEO_LENGTH_SEC=35
+YUV_PROFILE=yuv420p
+FFMPEG_OPTIONS="-c:v libvpx -quality best -cpu-used 0 -b:v $VIDEO_BITRATE -pix_fmt $YUV_PROFILE"
 CLEANUP=true
 
 duration() {
@@ -244,12 +256,12 @@ fi
 # 2. Remux presenter and viewer with a fixed bitrate
 if [ ! -f $TMP_PRESENTER ]; then
     echo Remuxing presenter
-    ffmpeg $FFMPEG_LOG -y -i $PRESENTER -s ${WIDTH}x${HEIGHT} -c:v libvpx -quality best -cpu-used 0 -b:v $VIDEO_BITRATE -pix_fmt yuv420p $REMUXED_PRESENTER
+    ffmpeg $FFMPEG_LOG -y -i $PRESENTER -s ${WIDTH}x${HEIGHT} $FFMPEG_OPTIONS $REMUXED_PRESENTER
     ffmpeg $FFMPEG_LOG -y -i $REMUXED_PRESENTER -filter:v "minterpolate='mi_mode=dup:fps=$FPS'" $TMP_PRESENTER
 fi
 if [ ! -f $TMP_VIEWER ]; then
     echo  Remuxing viewer
-    ffmpeg $FFMPEG_LOG -y -i $VIEWER -s ${WIDTH}x${HEIGHT} -c:v libvpx -quality best -cpu-used 0 -b:v $VIDEO_BITRATE -pix_fmt yuv420p $REMUXED_VIEWER
+    ffmpeg $FFMPEG_LOG -y -i $VIEWER -s ${WIDTH}x${HEIGHT} $FFMPEG_OPTIONS $REMUXED_VIEWER
     ffmpeg $FFMPEG_LOG -y -i $REMUXED_VIEWER -filter:v "minterpolate='mi_mode=dup:fps=$FPS'" $TMP_VIEWER
 fi
 
@@ -259,9 +271,8 @@ fi
 mkdir -p $JPG_FOLDER
 
 if [ ! -f $CUT_PRESENTER ]; then
-    p_suffix="-p.jpg"
-    ffmpeg $FFMPEG_LOG -i $TMP_PRESENTER $JPG_FOLDER/%04d$p_suffix
-    jpgs=("$JPG_FOLDER/*$p_suffix")
+    ffmpeg $FFMPEG_LOG -i $TMP_PRESENTER $JPG_FOLDER/%04d$P_SUFFIX
+    jpgs=("$JPG_FOLDER/*$P_SUFFIX")
     i_jpgs=$(ls -r $jpgs)
 
     echo "Checking padding in presenter video"
@@ -295,14 +306,13 @@ if [ ! -f $CUT_PRESENTER ]; then
     from=$retval
     duration $CUT_PRESENTER_TIME
     to=$retval
-    ffmpeg $FFMPEG_LOG -i $TMP_PRESENTER -ss $from -t $to -c:v libvpx -quality best -cpu-used 0 -b:v $VIDEO_BITRATE -pix_fmt yuv420p -y $CUT_PRESENTER
+    ffmpeg $FFMPEG_LOG -i $TMP_PRESENTER -ss $from -t $to $FFMPEG_OPTIONS -y $CUT_PRESENTER
 fi
 
 
 if [ ! -f $CUT_VIEWER ]; then
-    v_suffix="-v.jpg"
-    ffmpeg $FFMPEG_LOG -i $TMP_VIEWER $JPG_FOLDER/%04d$v_suffix
-    jpgs=("$JPG_FOLDER/*$v_suffix")
+    ffmpeg $FFMPEG_LOG -i $TMP_VIEWER $JPG_FOLDER/%04d$V_SUFFIX
+    jpgs=("$JPG_FOLDER/*$V_SUFFIX")
     i_jpgs=$(ls -r $jpgs)
 
     echo "Checking padding in viewer video"
@@ -336,19 +346,11 @@ if [ ! -f $CUT_VIEWER ]; then
     from=$retval
     duration $CUT_VIEWER_TIME
     to=$retval
-    ffmpeg $FFMPEG_LOG -i $TMP_VIEWER -ss $from -t $to -c:v libvpx -quality best -cpu-used 0 -b:v $VIDEO_BITRATE -pix_fmt yuv420p -y $CUT_VIEWER
+    ffmpeg $FFMPEG_LOG -i $TMP_VIEWER -ss $from -t $to $FFMPEG_OPTIONS -y $CUT_VIEWER
 fi
 
-# 4. Convert videos to yuv420p
-if [ ! -f $YUV_PRESENTER ]; then
-    ffmpeg $FFMPEG_LOG -i $CUT_PRESENTER -pix_fmt yuv420p -c:v rawvideo -an -y $YUV_PRESENTER
-fi
 
-if [ ! -f $YUV_VIEWER ]; then
-    ffmpeg $FFMPEG_LOG -i $CUT_VIEWER -pix_fmt yuv420p -c:v rawvideo -an -y $YUV_VIEWER
-fi
-
-# 5. Extract audio to wav
+# 4. Extract audio to wav
 if $CALCULATE_AUDIO_QOE && [ ! -f $WAV_PRESENTER ]; then
     echo "Extracting WAV from presenter"
     ffmpeg $FFMPEG_LOG -y -i $CUT_PRESENTER $WAV_PRESENTER
@@ -361,14 +363,61 @@ if $CALCULATE_AUDIO_QOE && [ ! -f $WAV_VIEWER ]; then
     ffmpeg $FFMPEG_LOG -y -i $CUT_VIEWER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_VIEWER
 fi
 
-# 6. Run VMAF and VQMT
+
+# 5. Optional fine-grained alignment
+
+if $EXTRA_ALIGNMENT && [ ! -f $P_TMP_3 ]; then
+    echo Fine-grained alignment in presenter
+
+    rm $JPG_FOLDER/*.*
+    ffmpeg $FFMPEG_LOG -i $CUT_PRESENTER $JPG_FOLDER/%04d$P_SUFFIX
+
+    NUM_FRAMES_PRESENTER=$(ls -1q $JPG_FOLDER/*$P_SUFFIX | wc -l)
+    FRAME_RATE_PRESENTER=$(jq -n $NUM_FRAMES_PRESENTER/$VIDEO_LENGTH_SEC)
+
+    ffmpeg $FFMPEG_LOG -y -framerate $FRAME_RATE_PRESENTER -f image2 -i $JPG_FOLDER/%04d$P_SUFFIX -codec copy $P_TMP_1
+    ffmpeg $FFMPEG_LOG -y -i $P_TMP_1 -i $WAV_PRESENTER -c copy -map 0:v:0 -map 1:a:0 $P_TMP_2
+    ffmpeg $FFMPEG_LOG -y -i $P_TMP_2 -filter:v "fps='fps=$FPS'" $P_TMP_3
+else
+    P_TMP_3=$CUT_PRESENTER
+fi
+
+if $EXTRA_ALIGNMENT && [ ! -f $V_TMP_3 ]; then
+    echo Fine-grained alignment in viewer
+
+    rm $JPG_FOLDER/*.*
+    ffmpeg $FFMPEG_LOG -i $CUT_VIEWER $JPG_FOLDER/%04d$V_SUFFIX
+
+    NUM_FRAMES_VIEWER=$(ls -1q $JPG_FOLDER/*$V_SUFFIX | wc -l)
+    FRAME_RATE_VIEWER=$(jq -n $NUM_FRAMES_VIEWER/$VIDEO_LENGTH_SEC)
+
+    ffmpeg $FFMPEG_LOG -y -framerate $FRAME_RATE_VIEWER -f image2 -i $JPG_FOLDER/%04d$V_SUFFIX -codec copy $V_TMP_1
+    ffmpeg $FFMPEG_LOG -y -i $V_TMP_1 -i $WAV_PRESENTER -c copy -map 0:v:0 -map 1:a:0 $V_TMP_2
+    ffmpeg $FFMPEG_LOG -y -i $V_TMP_2 -filter:v "fps='fps=$FPS'" $V_TMP_3
+else
+    V_TMP_3=$CUT_VIEWER
+fi
+
+# 6. Convert videos to YUV_PROFILE
+if [ ! -f $YUV_PRESENTER ]; then
+    echo Converting presenter to $YUV_PROFILE
+    ffmpeg $FFMPEG_LOG -i $P_TMP_3 -pix_fmt $YUV_PROFILE -c:v rawvideo -an -y $YUV_PRESENTER
+fi
+
+if [ ! -f $YUV_VIEWER ]; then
+    echo Converting viewer to $YUV_PROFILE
+    ffmpeg $FFMPEG_LOG -i $V_TMP_3 -pix_fmt $YUV_PROFILE -c:v rawvideo -an -y $YUV_VIEWER
+fi
+
+
+# 7. Run VMAF and VQMT
 echo "Calculating VMAF"
 $VMAF_PATH/run_vmaf yuv420p $WIDTH $HEIGHT $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER --out-fmt json > $PWD/$PREFIX-vmaf.json && cat $PWD/$PREFIX-vmaf.json | jq '.frames[].VMAF_score' > $PWD/$PREFIX-vmaf.csv
 
 echo "Calculating VIFp, SSIM, MS-SSIM, PSNR, PSNR-HVS, and PSNR-HVS-M"
 $VQMT_PATH/vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM >> /dev/null 2>&1
 
-# 7. Run PESQ and ViSQOL
+# 8. Run PESQ and ViSQOL
 if $CALCULATE_AUDIO_QOE; then
     ORIG_PWD=$PWD
 
@@ -377,7 +426,7 @@ if $CALCULATE_AUDIO_QOE; then
     else
         echo "Calculating PESQ"
         cd $PESQ_PATH
-        ./pesq +$AUDIO_SAMPLE_RATE $ORIG_PWD/resampled_$WAV_PRESENTER $ORIG_PWD/resampled_$WAV_VIEWER | tail -n 1 > $ORIG_PWD/$PREFIX-pesq.txt
+        ./pesq +$AUDIO_SAMPLE_RATE $ORIG_PWD/resampled_$WAV_PRESENTER $ORIG_PWD/resampled_$WAV_VIEWER | tail -n 1 > $ORIG_PWD/$PREFIX_pesq.txt
     fi
 
     if [ -z "$VISQOL_PATH" ]; then
@@ -385,31 +434,24 @@ if $CALCULATE_AUDIO_QOE; then
     else
         echo "Calculating ViSQOL"
         cd $VISQOL_PATH
-        ./bazel-bin/visqol --reference_file $ORIG_PWD/$WAV_PRESENTER --degraded_file $ORIG_PWD/$WAV_VIEWER --verbose | grep MOS-LQO > $ORIG_PWD/$PREFIX-visqol.txt
+        ./bazel-bin/visqol --reference_file $ORIG_PWD/$WAV_PRESENTER --degraded_file $ORIG_PWD/$WAV_VIEWER --verbose | grep MOS-LQO > $ORIG_PWD/$PREFIX_visqol.txt
     fi
 
     cd $ORIG_PWD
 fi
 
-# 8. Cleanup
+# 9. Cleanup
 if $CLEANUP; then
     echo "Removing temporal files"
-    rm -rf $JPG_FOLDER
-    rm $PREFIX-vmaf.json
-    rm $REMUXED_PRESENTER
-    rm $REMUXED_VIEWER
-    rm $TMP_PRESENTER
-    rm $TMP_VIEWER
-    rm $YUV_PRESENTER
-    rm $YUV_VIEWER
-    rm $WAV_PRESENTER
-    rm $WAV_VIEWER
-    rm resampled_$WAV_PRESENTER
-    rm resampled_$WAV_VIEWER
-    rm $PRESENTER
-    rm $VIEWER
-    rm $CUT_PRESENTER
-    rm $CUT_VIEWER
+    rm -rf $JPG_FOLDER \
+    $PREFIX-vmaf.json \
+    $REMUXED_PRESENTER $REMUXED_VIEWER \
+    $TMP_PRESENTER $TMP_VIEWER \
+    $YUV_PRESENTER $YUV_VIEWER \
+    $WAV_PRESENTER $WAV_VIEWER resampled_$WAV_PRESENTER resampled_$WAV_VIEWER \
+    $PRESENTER $VIEWER \
+    $CUT_PRESENTER $CUT_VIEWER \
+    $P_TMP_1 $P_TMP_2 $P_TMP_3 $V_TMP_1 $V_TMP_2 $V_TMP_3
 fi
 
 if $CALCULATE_AUDIO_QOE; then
