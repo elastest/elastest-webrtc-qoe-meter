@@ -126,7 +126,7 @@ public class ElasTestRemoteControlParent {
     private void injectRecordRtc(WebDriver driver) {
         String recordingJs = "var recScript=window.document.createElement('script');";
         recordingJs += "recScript.type='text/javascript';";
-        recordingJs += "recScript.src='https://cdnjs.cloudflare.com/ajax/libs/RecordRTC/5.5.4/RecordRTC.min.js';";
+        recordingJs += "recScript.src='https://cdnjs.cloudflare.com/ajax/libs/RecordRTC/5.5.8/RecordRTC.js';";
         recordingJs += "window.document.head.appendChild(recScript);";
         recordingJs += "return true;";
         this.executeScript(driver, recordingJs);
