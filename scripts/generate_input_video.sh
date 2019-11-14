@@ -45,7 +45,7 @@ ffmpeg $FFMPEG_LOG -f lavfi -i testsrc=duration=$PADDING_DURATION_SEC:size="$WID
 
 # 4. Concatenate final video
 echo "Concatenating padding and content videos"
-ffmpeg $FFMPEG_LOG -i padding.mp4 -i tmp.mp4 -i padding.mp4 -filter_complex concat=n=3:v=1:a=1 test.mp4
+ffmpeg $FFMPEG_LOG -i padding.mp4 -i test-no-padding.mp4 -i padding.mp4 -filter_complex concat=n=3:v=1:a=1 test.mp4
 
 
 # 5. Convert video to Y4M
@@ -59,5 +59,5 @@ ffmpeg $FFMPEG_LOG -y -i test.mp4 -vn -acodec pcm_s16le -ar $AUDIO_SAMPLE_RATE_H
 # 7. Delete temporal video files
 if $CLEANUP; then
     echo "Deleting temporal files"
-    rm tmp.mp4 padding.mp4 test.mp4
+    rm test-no-frame-number.mp4 test-no-padding.mp4 padding.mp4 test.mp4
 fi
