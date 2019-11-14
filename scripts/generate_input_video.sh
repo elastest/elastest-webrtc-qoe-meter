@@ -20,6 +20,7 @@ AUDIO_CHANNELS_NUMBER=2
 FFMPEG_LOG="-loglevel error"
 TARGET_VIDEO=../test.y4m
 TARGET_AUDIO=../test.wav
+FONT=/usr/share/fonts/truetype/msttcorefonts/Arial.ttf
 CLEANUP=true
 
 # 1. Download video sample
@@ -33,7 +34,8 @@ fi
 
 # 2. Cut original video
 echo "Cutting original video (duration $VIDEO_DURATION)"
-ffmpeg $FFMPEG_LOG -i "$VIDEO_SAMPLE_NAME" -ss 00:00:00 -t $VIDEO_DURATION -vf scale="$WIDTH:$HEIGHT",setsar=1:1 -r $FPS tmp.mp4
+ffmpeg $FFMPEG_LOG -i "$VIDEO_SAMPLE_NAME" -ss 00:00:00 -t $VIDEO_DURATION -vf scale="$WIDTH:$HEIGHT",setsar=1:1 -r $FPS test-no-frame-number.mp4
+ffmpeg $FFMPEG_LOG -i test-no-frame-number.mp4 -vf drawtext="fontfile=$FONT:text='\   %{frame_num}  \ ':start_number=1:x=(w-tw)/2:y=h-(2*lh)+15:fontcolor=black:fontsize=40:box=1:boxcolor=white:boxborderw=10" test-no-padding.mp4
 
 
 # 3. Create padding video based on a test pattern
