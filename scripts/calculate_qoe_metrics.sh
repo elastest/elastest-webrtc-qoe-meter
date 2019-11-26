@@ -39,8 +39,8 @@ P_SUFFIX="-p.jpg"
 V_SUFFIX="-v.jpg"
 VIDEO_LENGTH_SEC=35
 YUV_PROFILE=yuv420p
-FFMPEG_OPTIONS="-c:v libvpx -quality best -cpu-used 0 -b:v $VIDEO_BITRATE -pix_fmt $YUV_PROFILE"
 CLEANUP=true
+FFMPEG_OPTIONS="-c:v libvpx -b:v $VIDEO_BITRATE -pix_fmt $YUV_PROFILE"
 
 cleanup() {
     echo "Removing temporal files"
