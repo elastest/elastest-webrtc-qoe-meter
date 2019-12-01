@@ -38,11 +38,11 @@ public class RecordWebRtcSamples2Test extends ElasTestRemoteControlParent {
 
     final Logger log = getLogger(lookup().lookupClass());
 
-    public static final String FAKE_DEVICE = "--use-fake-device-for-media-stream";
-    public static final String FAKE_UI = "--use-fake-ui-for-media-stream";
+    static final String SUT_URL = "https://webrtc.github.io/samples/src/content/peerconnection/pc1/";
+    static final String FAKE_DEVICE = "--use-fake-device-for-media-stream";
+    static final String FAKE_UI = "--use-fake-ui-for-media-stream";
     static final String FAKE_VIDEO = "--use-file-for-fake-video-capture=test.y4m";
     static final String FAKE_AUDIO = "--use-file-for-fake-audio-capture=test.wav";
-    static final String SUT_URL = "https://webrtc.github.io/samples/src/content/peerconnection/pc1/";
     static final int TEST_TIME_SEC = 10;
 
     ChromeDriver driver;
