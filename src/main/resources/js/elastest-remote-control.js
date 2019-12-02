@@ -28,98 +28,44 @@ ElasTestRemoteControl.prototype.sayHello = function() {
 
 ElasTestRemoteControl.prototype.startRecording = function(stream,
 		recordingType, mediaContainerFormat) {
-	// Defaults
 	var mimeType = "video/webm";
-	var isChrome = true;
 	if (mediaContainerFormat === "mp4") {
 		mimeType = "video/mp4";
 	}
-	var recordingMedia = "record-audio-and-video";
-	if (recordingType) {
-		recordingMedia = recordingType;
-	}
+	var recordingMedia = recordingType ? recordingType
+			: "record-audio-and-video";
 
 	if (recordingMedia === "record-video") {
 		var options = {
 			type : "video",
-			mimeType : isChrome ? null : mimeType,
+			mimeType : mimeType,
 			disableLogs : false,
-			canvas : {
-				width : 320,
-				height : 240
-			},
-			frameInterval : 20
-		// minimum time between pushing frames to Whammy (in milliseconds)
+			frameInterval : 90
 		}
-		this.recordRTC = RecordRTC(stream, options);
-		this.recordRTC.startRecording();
 	}
 
 	if (recordingMedia === "record-audio") {
 		var options = {
 			type : "audio",
 			mimeType : mimeType,
-			bufferSize : 0,
+			bufferSize : 16384,
 			sampleRate : 44100,
+			numberOfAudioChannels : 2,
 			leftChannel : false,
-			disableLogs : false,
-			recorderType : StereoAudioRecorder
+			disableLogs : false
 		};
-
-		this.recordRTC = RecordRTC(stream, options);
-		this.recordRTC.startRecording();
 	}
 
 	if (recordingMedia === "record-audio-and-video") {
-		if (typeof MediaRecorder === "undefined") { // Opera
-			this.recordRTC = [];
-			var audioOptions = {
-				type : "audio",
-				bufferSize : 16384, // it fixes audio issues whilst
-				// recording 720p
-				sampleRate : 44100,
-				leftChannel : false,
-				disableLogs : false,
-				recorderType : StereoAudioRecorder
-			};
-			var videoOptions = {
-				type : "video",
-				disableLogs : false,
-				canvas : {
-					width : 320,
-					height : 240
-				},
-				frameInterval : 20
-			// minimum time between pushing frames to Whammy (in
-			// milliseconds)
-			};
-
-			var audioRecorder = RecordRTC(stream, audioOptions);
-			var videoRecorder = RecordRTC(stream, videoOptions);
-
-			// to sync audio/video playbacks in browser!
-			videoRecorder.initRecorder(function() {
-				audioRecorder.initRecorder(function() {
-					audioRecorder.startRecording();
-					videoRecorder.startRecording();
-				});
-			});
-			this.recordRTC.push(audioRecorder, videoRecorder);
-			return;
-		}
-
 		var options = {
 			type : "video",
-			mimeType : isChrome ? null : mimeType,
-			disableLogs : false,
-			// bitsPerSecond : 25 * 8 * 1025, // 25 kbits/s
-			getNativeBlob : true
-		// enable for longer recordings
+			mimeType : mimeType,
+			disableLogs : false
 		}
-
-		this.recordRTC = RecordRTC(stream, options);
-		this.recordRTC.startRecording();
 	}
+
+	this.recordRTC = RecordRTC(stream, options);
+	this.recordRTC.startRecording();
 }
 
 ElasTestRemoteControl.prototype.stopRecording = function() {
@@ -174,19 +120,6 @@ ElasTestRemoteControl.prototype.recordingToData = function() {
 		}
 	}
 }
-
-/*
- * Override RTCPeerConnection
- */
-var peerConnections = [];
-var origPeerConnection = window.RTCPeerConnection;
-window.RTCPeerConnection = function(pcConfig, pcConstraints) {
-	pcConfig.sdpSemantics = "unified-plan";
-	var pc = new origPeerConnection(pcConfig, pcConstraints);
-	peerConnections.push(pc);
-	return pc;
-}
-window.RTCPeerConnection.prototype = origPeerConnection.prototype;
 
 /*
  * Instantiation of ElasTestRemoteControl object
