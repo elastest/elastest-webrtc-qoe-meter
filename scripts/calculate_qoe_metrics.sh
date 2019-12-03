@@ -25,16 +25,9 @@ YUV_PRESENTER=$PREFIX-p.yuv
 YUV_VIEWER=$PREFIX-v.yuv
 WAV_PRESENTER=$PREFIX-p.wav
 WAV_VIEWER=$PREFIX-v.wav
-P_TMP_1=tmp_p_1.mkv
-P_TMP_2=tmp_p_2.mkv
-P_TMP_3=tmp_p_3.mkv
-V_TMP_1=tmp_v_1.mkv
-V_TMP_2=tmp_v_2.mkv
-V_TMP_3=tmp_v_3.mkv
 JPG_FOLDER=jpg
 FFMPEG_LOG="-loglevel error"
 CALCULATE_AUDIO_QOE=false
-EXTRA_ALIGNMENT=false
 P_SUFFIX="-p.jpg"
 V_SUFFIX="-v.jpg"
 VIDEO_LENGTH_SEC=35
@@ -51,8 +44,7 @@ cleanup() {
         $YUV_PRESENTER $YUV_VIEWER \
         $WAV_PRESENTER $WAV_VIEWER resampled_$WAV_PRESENTER resampled_$WAV_VIEWER \
         $PRESENTER $VIEWER \
-        $CUT_PRESENTER $CUT_VIEWER \
-        $P_TMP_1 $P_TMP_2 $P_TMP_3 $V_TMP_1 $V_TMP_2 $V_TMP_3
+        $CUT_PRESENTER $CUT_VIEWER
 }
 
 duration() {
@@ -166,7 +158,6 @@ match_rgb() {
       retval=false
    fi
 }
-
 
 match_color() {
    image=$1
@@ -375,53 +366,20 @@ fi
 
 
 # 5. Extract audio to wav
-if $CALCULATE_AUDIO_QOE || $EXTRA_ALIGNMENT && [ ! -f $WAV_PRESENTER ]; then
+if $CALCULATE_AUDIO_QOE && [ ! -f $WAV_PRESENTER ]; then
     echo "Extracting WAV from presenter"
     ffmpeg $FFMPEG_LOG -y -i $CUT_PRESENTER $WAV_PRESENTER
     ffmpeg $FFMPEG_LOG -y -i $CUT_PRESENTER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_PRESENTER
 fi
 
-if $CALCULATE_AUDIO_QOE || $EXTRA_ALIGNMENT && [ ! -f $WAV_VIEWER ]; then
+if $CALCULATE_AUDIO_QOE && [ ! -f $WAV_VIEWER ]; then
     echo "Extracting WAV from viewer"
     ffmpeg $FFMPEG_LOG -y -i $CUT_VIEWER $WAV_VIEWER
     ffmpeg $FFMPEG_LOG -y -i $CUT_VIEWER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_VIEWER
 fi
 
 
-# 6. Optional fine-grained alignment
-if $EXTRA_ALIGNMENT && [ ! -f $P_TMP_3 ]; then
-    echo Fine-grained alignment in presenter
-
-    rm $JPG_FOLDER/*.*
-    ffmpeg $FFMPEG_LOG -i $CUT_PRESENTER $JPG_FOLDER/%04d$P_SUFFIX
-
-    NUM_FRAMES_PRESENTER=$(ls -1q $JPG_FOLDER/*$P_SUFFIX | wc -l)
-    FRAME_RATE_PRESENTER=$(jq -n $NUM_FRAMES_PRESENTER/$VIDEO_LENGTH_SEC)
-
-    ffmpeg $FFMPEG_LOG -y -framerate $FRAME_RATE_PRESENTER -f image2 -i $JPG_FOLDER/%04d$P_SUFFIX -codec copy $P_TMP_1
-    ffmpeg $FFMPEG_LOG -y -i $P_TMP_1 -i $WAV_PRESENTER -c copy -map 0:v:0 -map 1:a:0 $P_TMP_2
-    ffmpeg $FFMPEG_LOG -y -i $P_TMP_2 -filter:v "fps='fps=$FPS'" $P_TMP_3
-else
-    P_TMP_3=$CUT_PRESENTER
-fi
-
-if $EXTRA_ALIGNMENT && [ ! -f $V_TMP_3 ]; then
-    echo Fine-grained alignment in viewer
-
-    rm $JPG_FOLDER/*.*
-    ffmpeg $FFMPEG_LOG -i $CUT_VIEWER $JPG_FOLDER/%04d$V_SUFFIX
-
-    NUM_FRAMES_VIEWER=$(ls -1q $JPG_FOLDER/*$V_SUFFIX | wc -l)
-    FRAME_RATE_VIEWER=$(jq -n $NUM_FRAMES_VIEWER/$VIDEO_LENGTH_SEC)
-
-    ffmpeg $FFMPEG_LOG -y -framerate $FRAME_RATE_VIEWER -f image2 -i $JPG_FOLDER/%04d$V_SUFFIX -codec copy $V_TMP_1
-    ffmpeg $FFMPEG_LOG -y -i $V_TMP_1 -i $WAV_PRESENTER -c copy -map 0:v:0 -map 1:a:0 $V_TMP_2
-    ffmpeg $FFMPEG_LOG -y -i $V_TMP_2 -filter:v "fps='fps=$FPS'" $V_TMP_3
-else
-    V_TMP_3=$CUT_VIEWER
-fi
-
-# 7. Convert videos to YUV_PROFILE
+# 6. Convert videos to YUV_PROFILE
 if [ ! -f $YUV_PRESENTER ]; then
     echo Converting presenter to $YUV_PROFILE
     ffmpeg $FFMPEG_LOG -i $P_TMP_3 -pix_fmt $YUV_PROFILE -c:v rawvideo -an -y $YUV_PRESENTER
@@ -433,14 +391,14 @@ if [ ! -f $YUV_VIEWER ]; then
 fi
 
 
-# 8. Run VMAF and VQMT
+# 7. Run VMAF and VQMT
 echo "Calculating VMAF"
 $VMAF_PATH/run_vmaf yuv420p $WIDTH $HEIGHT $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER --out-fmt json > $PWD/${PREFIX}_vmaf.json && cat $PWD/${PREFIX}_vmaf.json | jq '.frames[].VMAF_score' > $PWD/${PREFIX}_vmaf.csv
 
 echo "Calculating VIFp, SSIM, MS-SSIM, PSNR, PSNR-HVS, and PSNR-HVS-M"
 $VQMT_PATH/vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM >> /dev/null 2>&1
 
-# 9. Run PESQ and ViSQOL
+# 8. Run PESQ and ViSQOL
 if $CALCULATE_AUDIO_QOE; then
     ORIG_PWD=$PWD
 
@@ -463,7 +421,7 @@ if $CALCULATE_AUDIO_QOE; then
     cd $ORIG_PWD
 fi
 
-# 10. Cleanup
+# 9. Cleanup
 if $CLEANUP; then
     cleanup
 fi
