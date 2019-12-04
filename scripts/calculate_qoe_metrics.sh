@@ -1,39 +1,29 @@
 #!/bin/bash
 
-DEFAULT_PREFIX=0
-PREFIX=${1:-$DEFAULT_PREFIX}
+##################################################################################
+# DEFAULT VALUES
+##################################################################################
 
-DEFAULT_WIDTH=640
-WIDTH=${2:-$DEFAULT_WIDTH}
-
-DEFAULT_HEIGHT=480
-HEIGHT=${3:-$DEFAULT_HEIGHT}
-
+PREFIX=0
+WIDTH=640
+HEIGHT=480
 SOURCE_FOLDER=..
 FPS=24
 AUDIO_SAMPLE_RATE=16000
 VIDEO_BITRATE=3M
-PRESENTER=$PREFIX-presenter.webm
-VIEWER=$PREFIX-viewer.webm
-REMUXED_PRESENTER=$PREFIX-remux-p.webm
-REMUXED_VIEWER=$PREFIX-remux-v.webm
-TMP_PRESENTER=$PREFIX-p.webm
-TMP_VIEWER=$PREFIX-v.webm
-CUT_PRESENTER=$PREFIX-p-cut.webm
-CUT_VIEWER=$PREFIX-v-cut.webm
-YUV_PRESENTER=$PREFIX-p.yuv
-YUV_VIEWER=$PREFIX-v.yuv
-WAV_PRESENTER=$PREFIX-p.wav
-WAV_VIEWER=$PREFIX-v.wav
 JPG_FOLDER=jpg
 FFMPEG_LOG="-loglevel error"
-CALCULATE_AUDIO_QOE=false
 P_SUFFIX="-p.jpg"
 V_SUFFIX="-v.jpg"
 VIDEO_LENGTH_SEC=35
 YUV_PROFILE=yuv420p
-CLEANUP=true
 FFMPEG_OPTIONS="-c:v libvpx -b:v $VIDEO_BITRATE -pix_fmt $YUV_PROFILE"
+CALCULATE_AUDIO_QOE=false
+CLEANUP=true
+
+##################################################################################
+# FUNCTIONS
+##################################################################################
 
 cleanup() {
     echo "Removing temporal files"
@@ -224,21 +214,71 @@ match_image() {
    fi
 }
 
-####################################################################################
-####################################################################################
+##################################################################################
+# PARSE ARGUMENTS
+##################################################################################
 
-echo "*** Calculating QoE metrics (WebRTC $PREFIX% packet loss) ***"
+USAGE="Usage: `basename $0` [-p=prefix] [-w=width] [-h=height] [--calculate_audio_qoe] [--no_cleanup] [--clean] [--clean-all]"
 
-# 0. Optional cleanup
-if [ "$WIDTH" == "clean" ]; then
+for i in "$@"
+do
+case $i in
+    -p=*|--prefix=*)
+    PREFIX="${i#*=}"
+    shift
+    ;;
+    -w=*|--width=*)
+    WIDTH="${i#*=}"
+    shift
+    ;;
+    -h=*|--height=*)
+    HEIGHT="${i#*=}"
+    shift
+    ;;
+    --calculate_audio_qoe)
+    CALCULATE_AUDIO_QOE=true
+    shift
+    ;;
+    --no_cleanup)
+    CLEANUP=false
+    shift
+    ;;
+    --clean)
     cleanup
     exit 0
-fi
-if [ "$WIDTH" == "clean-all" ]; then
+    shift
+    ;;
+    --clean-all)
     cleanup
     rm $PREFIX_*.csv $PREFIX_*.txt 2>/dev/null
     exit 0
-fi
+    shift
+    ;;
+    *) # unknown option
+    echo $USAGE
+    exit 0
+    ;;
+esac
+done
+
+PRESENTER=$PREFIX-presenter.webm
+VIEWER=$PREFIX-viewer.webm
+REMUXED_PRESENTER=$PREFIX-remux-p.webm
+REMUXED_VIEWER=$PREFIX-remux-v.webm
+TMP_PRESENTER=$PREFIX-p.webm
+TMP_VIEWER=$PREFIX-v.webm
+CUT_PRESENTER=$PREFIX-p-cut.webm
+CUT_VIEWER=$PREFIX-v-cut.webm
+YUV_PRESENTER=$PREFIX-p.yuv
+YUV_VIEWER=$PREFIX-v.yuv
+WAV_PRESENTER=$PREFIX-p.wav
+WAV_VIEWER=$PREFIX-v.wav
+
+##################################################################################
+# INIT
+##################################################################################
+
+echo "*** Calculating QoE metrics ***"
 
 # 1. Check VMAF and VQMT path
 if [ -z "$VMAF_PATH" ]; then
