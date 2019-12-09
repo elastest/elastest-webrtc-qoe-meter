@@ -308,12 +308,13 @@ if [ ! -f $VIEWER ]; then
     cp $SOURCE_FOLDER/$VIEWER .
 fi
 
-# 3. Remux presenter and viewer with a fixed bitrate
+# 3. Remux presenter and viewer with a fixed bitrate and resolution
 if [ ! -f $TMP_PRESENTER ]; then
     echo Remuxing presenter
     ffmpeg $FFMPEG_LOG -y -i $PRESENTER -s ${WIDTH}x${HEIGHT} $FFMPEG_OPTIONS $REMUXED_PRESENTER
     ffmpeg $FFMPEG_LOG -y -i $REMUXED_PRESENTER -filter:v "minterpolate='mi_mode=dup:fps=$FPS'" $TMP_PRESENTER
 fi
+
 if [ ! -f $TMP_VIEWER ]; then
     echo  Remuxing viewer
     ffmpeg $FFMPEG_LOG -y -i $VIEWER -s ${WIDTH}x${HEIGHT} $FFMPEG_OPTIONS $REMUXED_VIEWER
@@ -364,7 +365,6 @@ if [ ! -f $CUT_PRESENTER ]; then
     ffmpeg $FFMPEG_LOG -i $TMP_PRESENTER -ss $from -t $to $FFMPEG_OPTIONS -y $CUT_PRESENTER
 fi
 
-
 if [ ! -f $CUT_VIEWER ]; then
     ffmpeg $FFMPEG_LOG -i $TMP_VIEWER $JPG_FOLDER/%04d$V_SUFFIX
     jpgs=("$JPG_FOLDER/*$V_SUFFIX")
@@ -404,7 +404,6 @@ if [ ! -f $CUT_VIEWER ]; then
     ffmpeg $FFMPEG_LOG -i $TMP_VIEWER -ss $from -t $to $FFMPEG_OPTIONS -y $CUT_VIEWER
 fi
 
-
 # 5. Extract audio to wav
 if $CALCULATE_AUDIO_QOE && [ ! -f $WAV_PRESENTER ]; then
     echo "Extracting WAV from presenter"
@@ -418,18 +417,16 @@ if $CALCULATE_AUDIO_QOE && [ ! -f $WAV_VIEWER ]; then
     ffmpeg $FFMPEG_LOG -y -i $CUT_VIEWER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_VIEWER
 fi
 
-
 # 6. Convert videos to YUV_PROFILE
 if [ ! -f $YUV_PRESENTER ]; then
     echo Converting presenter to $YUV_PROFILE
-    ffmpeg $FFMPEG_LOG -i $P_TMP_3 -pix_fmt $YUV_PROFILE -c:v rawvideo -an -y $YUV_PRESENTER
+    ffmpeg $FFMPEG_LOG -i $CUT_PRESENTER -pix_fmt $YUV_PROFILE -c:v rawvideo -an -y $YUV_PRESENTER
 fi
 
 if [ ! -f $YUV_VIEWER ]; then
     echo Converting viewer to $YUV_PROFILE
-    ffmpeg $FFMPEG_LOG -i $V_TMP_3 -pix_fmt $YUV_PROFILE -c:v rawvideo -an -y $YUV_VIEWER
+    ffmpeg $FFMPEG_LOG -i $CUT_VIEWER -pix_fmt $YUV_PROFILE -c:v rawvideo -an -y $YUV_VIEWER
 fi
-
 
 # 7. Run VMAF and VQMT
 echo "Calculating VMAF"
