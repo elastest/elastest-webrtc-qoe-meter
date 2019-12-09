@@ -15,7 +15,6 @@
  *
  */
 function ElasTestRemoteControl() {
-	// Recording
 	this.recordRTC = null;
 	this.recordingData;
 }
@@ -26,44 +25,14 @@ ElasTestRemoteControl.prototype.sayHello = function() {
 	return hello;
 }
 
-ElasTestRemoteControl.prototype.startRecording = function(stream,
-		recordingType, mediaContainerFormat) {
-	var mimeType = "video/webm";
-	if (mediaContainerFormat === "mp4") {
-		mimeType = "video/mp4";
-	}
-	var recordingMedia = recordingType ? recordingType
-			: "record-audio-and-video";
-
-	if (recordingMedia === "record-video") {
-		var options = {
-			type : "video",
-			mimeType : mimeType,
-			disableLogs : false,
-			frameInterval : 90
-		}
-	}
-
-	if (recordingMedia === "record-audio") {
-		var options = {
-			type : "audio",
-			mimeType : mimeType,
-			bufferSize : 16384,
-			sampleRate : 44100,
-			numberOfAudioChannels : 2,
-			leftChannel : false,
-			disableLogs : false
-		};
-	}
-
-	if (recordingMedia === "record-audio-and-video") {
-		var options = {
-			type : "video",
-			mimeType : mimeType,
-			disableLogs : false
-		}
-	}
-
+ElasTestRemoteControl.prototype.startRecording = function(stream) {
+	var options = {
+		type : "video",
+		mimeType : "video/webm",
+		frameRate : 24,
+		numberOfAudioChannels : 1,
+		sampleRate : 48000
+	};
 	this.recordRTC = RecordRTC(stream, options);
 	this.recordRTC.startRecording();
 }
