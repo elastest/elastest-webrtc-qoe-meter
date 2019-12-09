@@ -25,6 +25,21 @@ CLEANUP=true
 # FUNCTIONS
 ##################################################################################
 
+init() {
+    PRESENTER=$PREFIX-presenter.webm
+    VIEWER=$PREFIX-viewer.webm
+    REMUXED_PRESENTER=$PREFIX-remux-p.webm
+    REMUXED_VIEWER=$PREFIX-remux-v.webm
+    TMP_PRESENTER=$PREFIX-p.webm
+    TMP_VIEWER=$PREFIX-v.webm
+    CUT_PRESENTER=$PREFIX-p-cut.webm
+    CUT_VIEWER=$PREFIX-v-cut.webm
+    YUV_PRESENTER=$PREFIX-p.yuv
+    YUV_VIEWER=$PREFIX-v.yuv
+    WAV_PRESENTER=$PREFIX-p.wav
+    WAV_VIEWER=$PREFIX-v.wav
+}
+
 cleanup() {
     echo "Removing temporal files"
     rm -rf $JPG_FOLDER \
@@ -218,11 +233,19 @@ match_image() {
 # PARSE ARGUMENTS
 ##################################################################################
 
-USAGE="Usage: `basename $0` [-p=prefix] [-w=width] [-h=height] [--calculate_audio_qoe] [--no_cleanup] [--clean] [--clean-all]"
+USAGE="Usage: `basename $0` [-p=prefix] [-w=width] [-h=height] [--calculate_audio_qoe] [--no_cleanup] [--clean] [--clean-all] [-vr=video_ref] [-ar=audio_ref]"
 
 for i in "$@"
 do
 case $i in
+    -vr=*|--video_ref=*)
+    VIDEO_REF="${i#*=}"
+    shift
+    ;;
+    -ar=*|--audio_ref=*)
+    AUDIO_REF="${i#*=}"
+    shift
+    ;;
     -p=*|--prefix=*)
     PREFIX="${i#*=}"
     shift
@@ -244,11 +267,13 @@ case $i in
     shift
     ;;
     --clean)
+    init
     cleanup
     exit 0
     shift
     ;;
     --clean-all)
+    init
     cleanup
     rm $PREFIX_*.csv $PREFIX_*.txt 2>/dev/null
     exit 0
@@ -260,19 +285,6 @@ case $i in
     ;;
 esac
 done
-
-PRESENTER=$PREFIX-presenter.webm
-VIEWER=$PREFIX-viewer.webm
-REMUXED_PRESENTER=$PREFIX-remux-p.webm
-REMUXED_VIEWER=$PREFIX-remux-v.webm
-TMP_PRESENTER=$PREFIX-p.webm
-TMP_VIEWER=$PREFIX-v.webm
-CUT_PRESENTER=$PREFIX-p-cut.webm
-CUT_VIEWER=$PREFIX-v-cut.webm
-YUV_PRESENTER=$PREFIX-p.yuv
-YUV_VIEWER=$PREFIX-v.yuv
-WAV_PRESENTER=$PREFIX-p.wav
-WAV_VIEWER=$PREFIX-v.wav
 
 ##################################################################################
 # INIT
@@ -290,8 +302,10 @@ if [ -z "$VQMT_PATH" ]; then
     exit 1
 fi
 
+init
+
 # 2. Check presenter and viewer files and copying to current folder if not exist
-if [ ! -f $PRESENTER ]; then
+if [ -z "$VIDEO_REF" ] && [ ! -f $PRESENTER ]; then
     if [ ! -f $SOURCE_FOLDER/$PRESENTER ]; then
         echo $SOURCE_FOLDER/$PRESENTER does not exist
         exit 1
@@ -299,6 +313,7 @@ if [ ! -f $PRESENTER ]; then
     echo Copying presenter to current folder
     cp $SOURCE_FOLDER/$PRESENTER .
 fi
+
 if [ ! -f $VIEWER ]; then
     if [ ! -f $SOURCE_FOLDER/$VIEWER ]; then
         echo $SOURCE_FOLDER/$VIEWER does not exist
@@ -309,7 +324,7 @@ if [ ! -f $VIEWER ]; then
 fi
 
 # 3. Remux presenter and viewer with a fixed bitrate and resolution
-if [ ! -f $TMP_PRESENTER ]; then
+if [ -z "$VIDEO_REF" ] && [ ! -f $TMP_PRESENTER ]; then
     echo Remuxing presenter
     ffmpeg $FFMPEG_LOG -y -i $PRESENTER -s ${WIDTH}x${HEIGHT} $FFMPEG_OPTIONS $REMUXED_PRESENTER
     ffmpeg $FFMPEG_LOG -y -i $REMUXED_PRESENTER -filter:v "minterpolate='mi_mode=dup:fps=$FPS'" $TMP_PRESENTER
@@ -326,7 +341,7 @@ fi
 
 mkdir -p $JPG_FOLDER
 
-if [ ! -f $CUT_PRESENTER ]; then
+if [ -z "$VIDEO_REF" ] && [ ! -f $CUT_PRESENTER ]; then
     ffmpeg $FFMPEG_LOG -i $TMP_PRESENTER $JPG_FOLDER/%04d$P_SUFFIX
     jpgs=("$JPG_FOLDER/*$P_SUFFIX")
     i_jpgs=$(ls -r $jpgs)
@@ -405,20 +420,20 @@ if [ ! -f $CUT_VIEWER ]; then
 fi
 
 # 5. Extract audio to wav
-if $CALCULATE_AUDIO_QOE && [ ! -f $WAV_PRESENTER ]; then
+if $CALCULATE_AUDIO_QOE && [ -z "$AUDIO_REF" ] && [ ! -f $WAV_PRESENTER ]; then
     echo "Extracting WAV from presenter"
     ffmpeg $FFMPEG_LOG -y -i $CUT_PRESENTER $WAV_PRESENTER
     ffmpeg $FFMPEG_LOG -y -i $CUT_PRESENTER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_PRESENTER
 fi
 
-if $CALCULATE_AUDIO_QOE && [ ! -f $WAV_VIEWER ]; then
+if $CALCULATE_AUDIO_QOE &&  [ ! -f $WAV_VIEWER ]; then
     echo "Extracting WAV from viewer"
     ffmpeg $FFMPEG_LOG -y -i $CUT_VIEWER $WAV_VIEWER
     ffmpeg $FFMPEG_LOG -y -i $CUT_VIEWER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_VIEWER
 fi
 
 # 6. Convert videos to YUV_PROFILE
-if [ ! -f $YUV_PRESENTER ]; then
+if [ -z "$VIDEO_REF" ] && [ ! -f $YUV_PRESENTER ]; then
     echo Converting presenter to $YUV_PROFILE
     ffmpeg $FFMPEG_LOG -i $CUT_PRESENTER -pix_fmt $YUV_PROFILE -c:v rawvideo -an -y $YUV_PRESENTER
 fi
@@ -430,21 +445,34 @@ fi
 
 # 7. Run VMAF and VQMT
 echo "Calculating VMAF"
-$VMAF_PATH/run_vmaf yuv420p $WIDTH $HEIGHT $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER --out-fmt json > $PWD/${PREFIX}_vmaf.json && cat $PWD/${PREFIX}_vmaf.json | jq '.frames[].VMAF_score' > $PWD/${PREFIX}_vmaf.csv
+
+REF=$YUV_PRESENTER
+if [ ! -z "$VIDEO_REF" ]; then
+    REF=$VIDEO_REF
+fi
+$VMAF_PATH/run_vmaf yuv420p $WIDTH $HEIGHT $PWD/$REF $PWD/$YUV_VIEWER --out-fmt json > $PWD/${PREFIX}_vmaf.json && cat $PWD/${PREFIX}_vmaf.json | jq '.frames[].VMAF_score' > $PWD/${PREFIX}_vmaf.csv
 
 echo "Calculating VIFp, SSIM, MS-SSIM, PSNR, PSNR-HVS, and PSNR-HVS-M"
-$VQMT_PATH/vqmt $PWD/$YUV_PRESENTER $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM >> /dev/null 2>&1
+$VQMT_PATH/vqmt $PWD/$REF $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM >> /dev/null 2>&1
 
 # 8. Run PESQ and ViSQOL
 if $CALCULATE_AUDIO_QOE; then
     ORIG_PWD=$PWD
+
+    REF_PESQ=resampled_$WAV_PRESENTER
+    REF_ViSQOL=$WAV_PRESENTER
+    if [ ! -z "$AUDIO_REF" ]; then
+        REF_PESQ=$AUDIO_REF
+        REF_ViSQOL=$AUDIO_REF
+        AUDIO_SAMPLE_RATE=8000
+    fi
 
     if [ -z "$PESQ_PATH" ]; then
         echo "You need to provide the path to PESQ binaries (https://github.com/dennisguse/ITU-T_pesq) in the environmental variable PESQ_PATH"
     else
         echo "Calculating PESQ"
         cd $PESQ_PATH
-        ./pesq +$AUDIO_SAMPLE_RATE $ORIG_PWD/resampled_$WAV_PRESENTER $ORIG_PWD/resampled_$WAV_VIEWER | tail -n 1 > $ORIG_PWD/${PREFIX}_pesq.txt
+        ./pesq +$AUDIO_SAMPLE_RATE $ORIG_PWD/$REF_PESQ $ORIG_PWD/resampled_$WAV_VIEWER | tail -n 1 > $ORIG_PWD/${PREFIX}_pesq.txt
     fi
 
     if [ -z "$VISQOL_PATH" ]; then
@@ -452,7 +480,7 @@ if $CALCULATE_AUDIO_QOE; then
     else
         echo "Calculating ViSQOL"
         cd $VISQOL_PATH
-        ./bazel-bin/visqol --reference_file $ORIG_PWD/$WAV_PRESENTER --degraded_file $ORIG_PWD/$WAV_VIEWER --verbose | grep MOS-LQO > $ORIG_PWD/${PREFIX}_visqol.txt
+        ./bazel-bin/visqol --reference_file $ORIG_PWD/$REF_ViSQOL --degraded_file $ORIG_PWD/$WAV_VIEWER --verbose | grep MOS-LQO > $ORIG_PWD/${PREFIX}_visqol.txt
     fi
 
     cd $ORIG_PWD
