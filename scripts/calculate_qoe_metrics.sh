@@ -350,7 +350,7 @@ align_ocr() {
       filename=$(basename $f)
 
       crop_value=100x45+270+430
-      if [ $WIDTH -eq 1280 ] && [ $HEIDHT -eq 720 ]; then
+      if [ $WIDTH -eq 1280 ] && [ $HEIGHT -eq 720 ]; then
          crop_value=100x45+590+670
       fi
       convert $f -crop $crop_value $cut_folder/_$filename
