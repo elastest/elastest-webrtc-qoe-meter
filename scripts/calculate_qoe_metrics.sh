@@ -509,7 +509,7 @@ fi
 #######################################
 # 6. Alignment based on OCR recognition
 #######################################
-if $ALIGN_OCR $$ [ -z "$VIDEO_REF" ]; then
+if $ALIGN_OCR && [ -z "$VIDEO_REF" ]; then
    if [ ! -f $OCR_PRESENTER ]; then
       align_ocr $CUT_PRESENTER $OCR_PRESENTER $WAV_PRESENTER
    fi
