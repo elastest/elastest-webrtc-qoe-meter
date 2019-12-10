@@ -21,43 +21,41 @@ DEFAULT_VIDEO_REF=../test-no-padding.yuv
 DEFAULT_AUDIO_REF=../test-no-padding.wav
 FONT=/usr/share/fonts/truetype/msttcorefonts/Arial.ttf
 CLEANUP=true
+USAGE="Usage: `basename $0` [-d=duration] [-p=padding_duration_sec] [--game] [--generate_default_ref] [--no_cleanup]"
 
 ##################################################################################
 # PARSE ARGUMENTS
 ##################################################################################
 
-USAGE="Usage: `basename $0` [-d=duration] [-p=padding_duration_sec] [--game] [--generate_default_ref] [--no_cleanup]"
-
-for i in "$@"
-do
-case $i in
-    --game)
-    VIDEO_SAMPLE_URL=https://ia802808.us.archive.org/6/items/ForniteBattle8/fornite%20battle%202.mp4
-    WIDTH=1280
-    HEIGHT=720
-    shift
-    ;;
-    --generate_default_ref)
-    GENERATE_DEFAULT_REF=true
-    shift
-    ;;
-    -d=*|--duration=*)
-    VIDEO_DURATION="${i#*=}"
-    shift
-    ;;
-    -p=*|--padding=*)
-    PADDING_DURATION_SEC="${i#*=}"
-    shift
-    ;;
-    --no_cleanup)
-    CLEANUP=false
-    shift
-    ;;
-    *) # unknown option
-    echo $USAGE
-    exit 0
-    ;;
-esac
+for i in "$@"; do
+   case $i in
+      --game)
+      VIDEO_SAMPLE_URL=https://ia802808.us.archive.org/6/items/ForniteBattle8/fornite%20battle%202.mp4
+      WIDTH=1280
+      HEIGHT=720
+      shift
+      ;;
+      --generate_default_ref)
+      GENERATE_DEFAULT_REF=true
+      shift
+      ;;
+      -d=*|--duration=*)
+      VIDEO_DURATION="${i#*=}"
+      shift
+      ;;
+      -p=*|--padding=*)
+      PADDING_DURATION_SEC="${i#*=}"
+      shift
+      ;;
+      --no_cleanup)
+      CLEANUP=false
+      shift
+      ;;
+      *) # unknown option
+      echo $USAGE
+      exit 0
+      ;;
+   esac
 done
 
 ##################################################################################
