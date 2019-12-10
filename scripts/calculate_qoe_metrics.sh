@@ -349,8 +349,11 @@ align_ocr() {
    for f in $JPG_FOLDER/*.jpg ; do
       filename=$(basename $f)
 
-      ################### TODO
-      convert $f -crop 100x45+590+670 $cut_folder/_$filename
+      crop_value=100x45+270+430
+      if [ $WIDTH -eq 1280 ] && [ $HEIDHT -eq 720 ]; then
+         crop_value=100x45+590+670
+      fi
+      convert $f -crop $crop_value $cut_folder/_$filename
 
       #frame=$(tesseract $cut_folder/_$filename stdout --psm 7 digits 2>/dev/null | sed -r '/^\s*$/d')
       frame=$(gocr -C 0-9 $cut_folder/_$filename | tr -d '[:space:]')
