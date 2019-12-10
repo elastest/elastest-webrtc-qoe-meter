@@ -20,7 +20,8 @@ YUV_PROFILE=yuv420p
 FFMPEG_OPTIONS="-c:v libvpx -b:v $VIDEO_BITRATE -pix_fmt $YUV_PROFILE"
 CALCULATE_AUDIO_QOE=false
 CLEANUP=true
-USAGE="Usage: `basename $0` [-p=prefix] [-w=width] [-h=height] [--calculate_audio_qoe] [--no_cleanup] [--clean] [--clean-all] [-vr=video_ref] [-ar=audio_ref]"
+ALIGN_OCR=false
+USAGE="Usage: `basename $0` [-p=prefix] [-w=width] [-h=height] [--calculate_audio_qoe] [--no_cleanup] [--clean] [--clean-all] [-vr=video_ref] [-ar=audio_ref] [--align_ocr]"
 
 ##################################################################################
 # FUNCTIONS
@@ -37,6 +38,8 @@ init() {
    TMP_VIEWER=$PREFIX-v.webm
    CUT_PRESENTER=$PREFIX-p-cut.webm
    CUT_VIEWER=$PREFIX-v-cut.webm
+   OCR_PRESENTER=$PREFIX-p-ocr.webm
+   OCR_VIEWER=$PREFIX-v-ocr.webm
    YUV_PRESENTER=$PREFIX-p.yuv
    YUV_VIEWER=$PREFIX-v.yuv
    WAV_PRESENTER=$PREFIX-p.wav
@@ -52,7 +55,8 @@ cleanup() {
        $YUV_PRESENTER $YUV_VIEWER \
        $WAV_PRESENTER $WAV_VIEWER resampled_$WAV_PRESENTER resampled_$WAV_VIEWER \
        $PRESENTER $VIEWER \
-       $CUT_PRESENTER $CUT_VIEWER
+       $CUT_PRESENTER $CUT_VIEWER \
+       $OCR_PRESENTER $OCR_VIEWER
 }
 
 duration() {
@@ -316,6 +320,66 @@ convert_yuv() {
    ffmpeg $FFMPEG_LOG -i $input -pix_fmt $YUV_PROFILE -c:v rawvideo -an -y $output
 }
 
+check_number() {
+   re='^[0-9]+$'
+   input=$1
+
+   if [ -n "$input" ] && [ "$input" -eq "$input" ] 2>/dev/null; then
+      retval=true
+   else
+      retval=false
+   fi
+}
+
+align_ocr() {
+   video_ocr=$1
+   output_ocr=$2
+   wav_ocr=$3
+
+   echo "Aligning $video_ocr based on frame OCR recognition"
+
+   cut_folder=$JPG_FOLDER/cut
+   mkdir -p $cut_folder
+   rm -f $JPG_FOLDER/*.jpg
+   rm -f $cut_folder/*.jpg
+
+   ffmpeg $FFMPEG_LOG -i $video_ocr $JPG_FOLDER/%04d.jpg
+
+   last=0
+   for f in $JPG_FOLDER/*.jpg ; do
+      filename=$(basename $f)
+
+      ################### TODO
+      convert $f -crop 100x45+590+670 $cut_folder/_$filename
+
+      #frame=$(tesseract $cut_folder/_$filename stdout --psm 7 digits 2>/dev/null | sed -r '/^\s*$/d')
+      frame=$(gocr -C 0-9 $cut_folder/_$filename | tr -d '[:space:]')
+      rm $cut_folder/_$filename
+
+      check_number $frame
+      is_number=$retval
+
+      if $is_number; then
+         #echo "$filename = $frame"
+         i=$(($last+1))
+         while [ $i -le $frame ];do
+            output=$(printf "%04d\n" $i)
+            cp $f $cut_folder/${output}.jpg
+            i=$(($i+1))
+         done
+         last=$frame
+      else
+         echo "Skipping $filename (recognized: $frame)"
+      fi
+   done
+
+   if $CALCULATE_AUDIO_QOE; then
+      ffmpeg $FFMPEG_LOG -y -framerate $FPS -f image2 -i $cut_folder/%04d.jpg -i $wav_ocr $output_ocr
+   else
+      ffmpeg $FFMPEG_LOG -y -framerate $FPS -f image2 -i $cut_folder/%04d.jpg $output_ocr
+   fi
+}
+
 
 ##################################################################################
 # PARSE ARGUMENTS
@@ -345,6 +409,10 @@ for i in "$@"; do
       ;;
       --calculate_audio_qoe)
       CALCULATE_AUDIO_QOE=true
+      shift
+      ;;
+      --align_ocr)
+      ALIGN_OCR=true
       shift
       ;;
       --no_cleanup)
@@ -430,8 +498,25 @@ if $CALCULATE_AUDIO_QOE &&  [ ! -f $WAV_VIEWER ]; then
    extract_wav $CUT_VIEWER $WAV_VIEWER
 fi
 
+
+#######################################
+# 6. Alignment based on OCR recognition
+#######################################
+if $ALIGN_OCR $$ [ -z "$VIDEO_REF" ]; then
+   if [ ! -f $OCR_PRESENTER ]; then
+      align_ocr $CUT_PRESENTER $OCR_PRESENTER $WAV_PRESENTER
+   fi
+   CUT_PRESENTER=$OCR_PRESENTER
+fi
+if $ALIGN_OCR; then
+   if [ ! -f $OCR_VIEWER ]; then
+      align_ocr $CUT_VIEWER $OCR_VIEWER $WAV_VIEWER
+   fi
+   CUT_VIEWER=$OCR_VIEWER
+fi
+
 #########################
-# 6. Convert video to YUV
+# 7. Convert video to YUV
 #########################
 if [ -z "$VIDEO_REF" ] && [ ! -f $YUV_PRESENTER ]; then
    convert_yuv $CUT_PRESENTER $YUV_PRESENTER
@@ -441,7 +526,7 @@ if [ ! -f $YUV_VIEWER ]; then
 fi
 
 ######################
-# 7. Run VMAF and VQMT
+# 8. Run VMAF and VQMT
 ######################
 REF=$YUV_PRESENTER
 if [ ! -z "$VIDEO_REF" ]; then
@@ -455,7 +540,7 @@ echo "Calculating VIFp, SSIM, MS-SSIM, PSNR, PSNR-HVS, and PSNR-HVS-M"
 $VQMT_PATH/vqmt $PWD/$REF $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM >> /dev/null 2>&1
 
 ########################
-# 8. Run PESQ and ViSQOL
+# 9. Run PESQ and ViSQOL
 ########################
 if $CALCULATE_AUDIO_QOE; then
     ORIG_PWD=$PWD
@@ -487,9 +572,9 @@ if $CALCULATE_AUDIO_QOE; then
     cd $ORIG_PWD
 fi
 
-#######################
-# 9. Cleanup and finish
-#######################
+########################
+# 10. Cleanup and finish
+########################
 if $CLEANUP; then
     cleanup
 fi
