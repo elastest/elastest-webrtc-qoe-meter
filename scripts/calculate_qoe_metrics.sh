@@ -343,7 +343,7 @@ align_ocr() {
    rm -f $JPG_FOLDER/*.jpg
    rm -f $cut_folder/*.jpg
 
-   ffmpeg $FFMPEG_LOG -i $video_ocr $JPG_FOLDER/%04d.jpg
+   ffmpeg $FFMPEG_LOG -i $video_ocr -qscale:v 2 $JPG_FOLDER/%04d.jpg
 
    last=0
    for f in $JPG_FOLDER/*.jpg ; do
