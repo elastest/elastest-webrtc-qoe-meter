@@ -20,67 +20,70 @@ YUV_PROFILE=yuv420p
 FFMPEG_OPTIONS="-c:v libvpx -b:v $VIDEO_BITRATE -pix_fmt $YUV_PROFILE"
 CALCULATE_AUDIO_QOE=false
 CLEANUP=true
+USAGE="Usage: `basename $0` [-p=prefix] [-w=width] [-h=height] [--calculate_audio_qoe] [--no_cleanup] [--clean] [--clean-all] [-vr=video_ref] [-ar=audio_ref]"
 
 ##################################################################################
 # FUNCTIONS
 ##################################################################################
 
 init() {
-    PRESENTER=$PREFIX-presenter.webm
-    VIEWER=$PREFIX-viewer.webm
-    REMUXED_PRESENTER=$PREFIX-remux-p.webm
-    REMUXED_VIEWER=$PREFIX-remux-v.webm
-    TMP_PRESENTER=$PREFIX-p.webm
-    TMP_VIEWER=$PREFIX-v.webm
-    CUT_PRESENTER=$PREFIX-p-cut.webm
-    CUT_VIEWER=$PREFIX-v-cut.webm
-    YUV_PRESENTER=$PREFIX-p.yuv
-    YUV_VIEWER=$PREFIX-v.yuv
-    WAV_PRESENTER=$PREFIX-p.wav
-    WAV_VIEWER=$PREFIX-v.wav
+   mkdir -p $JPG_FOLDER
+
+   PRESENTER=$PREFIX-presenter.webm
+   VIEWER=$PREFIX-viewer.webm
+   REMUXED_PRESENTER=$PREFIX-remux-p.webm
+   REMUXED_VIEWER=$PREFIX-remux-v.webm
+   TMP_PRESENTER=$PREFIX-p.webm
+   TMP_VIEWER=$PREFIX-v.webm
+   CUT_PRESENTER=$PREFIX-p-cut.webm
+   CUT_VIEWER=$PREFIX-v-cut.webm
+   YUV_PRESENTER=$PREFIX-p.yuv
+   YUV_VIEWER=$PREFIX-v.yuv
+   WAV_PRESENTER=$PREFIX-p.wav
+   WAV_VIEWER=$PREFIX-v.wav
 }
 
 cleanup() {
-    echo "Removing temporal files"
-    rm -rf $JPG_FOLDER \
-        ${PREFIX}_vmaf.json \
-        $REMUXED_PRESENTER $REMUXED_VIEWER \
-        $TMP_PRESENTER $TMP_VIEWER \
-        $YUV_PRESENTER $YUV_VIEWER \
-        $WAV_PRESENTER $WAV_VIEWER resampled_$WAV_PRESENTER resampled_$WAV_VIEWER \
-        $PRESENTER $VIEWER \
-        $CUT_PRESENTER $CUT_VIEWER
+   echo "Removing temporal files"
+   rm -rf $JPG_FOLDER \
+       ${PREFIX}_vmaf.json \
+       $REMUXED_PRESENTER $REMUXED_VIEWER \
+       $TMP_PRESENTER $TMP_VIEWER \
+       $YUV_PRESENTER $YUV_VIEWER \
+       $WAV_PRESENTER $WAV_VIEWER resampled_$WAV_PRESENTER resampled_$WAV_VIEWER \
+       $PRESENTER $VIEWER \
+       $CUT_PRESENTER $CUT_VIEWER
 }
 
 duration() {
-    num=$1
-    decimals=
+   num=$1
+   decimals=
 
-    strindex $1 .
-    if [ $retval -gt 0 ]; then
-        num=$(echo $1 | cut -d'.' -f 1)
-        decimals=$(echo $1 | cut -d'.' -f 2)
-    fi
+   strindex $1 .
+   if [ $retval -gt 0 ]; then
+      num=$(echo $1 | cut -d'.' -f 1)
+      decimals=$(echo $1 | cut -d'.' -f 2)
+   fi
 
-    ((h=num/3600))
-    ((m=num%3600/60))
-    ((s=num%60))
+   ((h=num/3600))
+   ((m=num%3600/60))
+   ((s=num%60))
 
-    retval=$(printf "%02d:%02d:%02d\n" $h $m $s)
+   retval=$(printf "%02d:%02d:%02d\n" $h $m $s)
 
-    if [ ! -z "$decimals" ]; then
-        retval="${retval}.${decimals}"
-    fi
+   if [ ! -z "$decimals" ]; then
+      retval="${retval}.${decimals}"
+   fi
 }
 
 strindex() {
-  x="${1%%$2*}"
-  retval=$([[ "$x" = "$1" ]] && echo -1 || echo "${#x}")
+   x="${1%%$2*}"
+   retval=$([[ "$x" = "$1" ]] && echo -1 || echo "${#x}")
 }
 
 find_index() {
-    x="${1%%$2*}"
-    retval=${#x}
+   x="${1%%$2*}"
+   retval=${#x}
 }
 
 get_r() {
@@ -121,6 +124,7 @@ get_rgb() {
    image=$1
    width=$2
    height=$3
+
    retval=$(convert $image -format "%[pixel:u.p{$width,$height}]" -colorspace rgb info:)
 }
 
@@ -229,233 +233,230 @@ match_image() {
    fi
 }
 
+check_input() {
+   input=$1
+
+   if [ ! -f $SOURCE_FOLDER/$input ]; then
+       echo "$SOURCE_FOLDER/$input does not exist"
+       exit 1
+   fi
+   echo "Copying $input to current folder"
+   cp $SOURCE_FOLDER/$input .
+}
+
+remux() {
+   input=$1
+   output1=$2
+   output2=$3
+
+   echo "Remuxing $input to $output2"
+   ffmpeg $FFMPEG_LOG -y -i $input -s ${WIDTH}x${HEIGHT} $FFMPEG_OPTIONS $output1
+   ffmpeg $FFMPEG_LOG -y -i $output1 -filter:v "minterpolate='mi_mode=dup:fps=$FPS'" $output2
+}
+
+cut_video() {
+   input_cut=$1
+   output_cut=$2
+   suffix_cut=$3
+
+   echo "Checking padding in $input_cut (result: $output_cut)"
+
+   # Extract images per frame (to find out change from padding to video and viceversa)
+   ffmpeg $FFMPEG_LOG -i $input_cut $JPG_FOLDER/%04d$suffix_cut
+   jpgs=("$JPG_FOLDER/*$suffix_cut")
+   i_jpgs=$(ls -r $jpgs)
+
+   for i in $jpgs; do
+      file=$(echo $i)
+      match_image "$file"
+      match=$retval
+      if ! $match; then
+         cut_frame_from=$(echo "$file" | tr -dc '0-9')
+         break
+      fi
+   done
+
+   for i in $i_jpgs; do
+       file=$(echo $i)
+       match_image "$file"
+       match=$retval
+       if ! $match; then
+         cut_frame_to=$(echo "$file" | tr -dc '0-9')
+         break
+       fi
+   done
+
+   echo "Cutting $1 from frame $cut_frame_from to $cut_frame_to"
+
+   cut_time_from=$(jq -n $cut_frame_from/$FPS)
+   cut_time_to=$(jq -n $cut_frame_to/$FPS)
+   cut_time=$(jq -n $cut_time_to-$cut_time_from)
+
+   duration $cut_time_from
+   from=$retval
+   duration $cut_time
+   to=$retval
+   ffmpeg $FFMPEG_LOG -y -i $input_cut -ss $from -t $to $FFMPEG_OPTIONS $output_cut
+}
+
+extract_wav() {
+   input=$1
+   output=$2
+
+   echo "Extracting $output from $input"
+   ffmpeg $FFMPEG_LOG -y -i $input $output
+   ffmpeg $FFMPEG_LOG -y -i $input -ar $AUDIO_SAMPLE_RATE resampled_$output
+}
+
+convert_yuv() {
+   input=$1
+   output=$2
+
+   echo "Converting $input to $output ($YUV_PROFILE profile)"
+   ffmpeg $FFMPEG_LOG -i $input -pix_fmt $YUV_PROFILE -c:v rawvideo -an -y $output
+}
+
+
 ##################################################################################
 # PARSE ARGUMENTS
 ##################################################################################
 
-USAGE="Usage: `basename $0` [-p=prefix] [-w=width] [-h=height] [--calculate_audio_qoe] [--no_cleanup] [--clean] [--clean-all] [-vr=video_ref] [-ar=audio_ref]"
-
-for i in "$@"
-do
-case $i in
-    -vr=*|--video_ref=*)
-    VIDEO_REF="${i#*=}"
-    shift
-    ;;
-    -ar=*|--audio_ref=*)
-    AUDIO_REF="${i#*=}"
-    shift
-    ;;
-    -p=*|--prefix=*)
-    PREFIX="${i#*=}"
-    shift
-    ;;
-    -w=*|--width=*)
-    WIDTH="${i#*=}"
-    shift
-    ;;
-    -h=*|--height=*)
-    HEIGHT="${i#*=}"
-    shift
-    ;;
-    --calculate_audio_qoe)
-    CALCULATE_AUDIO_QOE=true
-    shift
-    ;;
-    --no_cleanup)
-    CLEANUP=false
-    shift
-    ;;
-    --clean)
-    init
-    cleanup
-    exit 0
-    shift
-    ;;
-    --clean-all)
-    init
-    cleanup
-    rm $PREFIX_*.csv $PREFIX_*.txt 2>/dev/null
-    exit 0
-    shift
-    ;;
-    *) # unknown option
-    echo $USAGE
-    exit 0
-    ;;
-esac
+for i in "$@"; do
+   case $i in
+      -vr=*|--video_ref=*)
+      VIDEO_REF="${i#*=}"
+      shift
+      ;;
+      -ar=*|--audio_ref=*)
+      AUDIO_REF="${i#*=}"
+      shift
+      ;;
+      -p=*|--prefix=*)
+      PREFIX="${i#*=}"
+      shift
+      ;;
+      -w=*|--width=*)
+      WIDTH="${i#*=}"
+      shift
+      ;;
+      -h=*|--height=*)
+      HEIGHT="${i#*=}"
+      shift
+      ;;
+      --calculate_audio_qoe)
+      CALCULATE_AUDIO_QOE=true
+      shift
+      ;;
+      --no_cleanup)
+      CLEANUP=false
+      shift
+      ;;
+      --clean)
+      init
+      cleanup
+      exit 0
+      shift
+      ;;
+      --clean-all)
+      init
+      cleanup
+      rm $PREFIX_*.csv $PREFIX_*.txt 2>/dev/null
+      exit 0
+      shift
+      ;;
+      *) # unknown option
+      echo "$USAGE"
+      exit 0
+      ;;
+  esac
 done
 
 ##################################################################################
-# INIT
+# INIT SCRIPT
 ##################################################################################
 
 echo "*** Calculating QoE metrics ***"
 
-# 1. Check VMAF and VQMT path
+######################################
+# 1. Check VMAF and VQMT path and init
+######################################
 if [ -z "$VMAF_PATH" ]; then
-    echo "You need to provide the path to VMAF binaries (check out from https://github.com/Netflix/vmaf) in the environmental variable VMAF_PATH"
-    exit 1
+   echo "You need to provide the path to VMAF binaries (check out from https://github.com/Netflix/vmaf) in the environmental variable VMAF_PATH"
+   exit 1
 fi
 if [ -z "$VQMT_PATH" ]; then
-    echo "You need to provide the path to VQMT binaries (check out from https://github.com/Rolinh/VQMT) in the environmental variable VQMT_PATH"
-    exit 1
+   echo "You need to provide the path to VQMT binaries (check out from https://github.com/Rolinh/VQMT) in the environmental variable VQMT_PATH"
+   exit 1
 fi
-
 init
 
-# 2. Check presenter and viewer files and copying to current folder if not exist
+#####################################
+# 2. Check presenter and viewer files
+#####################################
 if [ -z "$VIDEO_REF" ] && [ ! -f $PRESENTER ]; then
-    if [ ! -f $SOURCE_FOLDER/$PRESENTER ]; then
-        echo $SOURCE_FOLDER/$PRESENTER does not exist
-        exit 1
-    fi
-    echo Copying presenter to current folder
-    cp $SOURCE_FOLDER/$PRESENTER .
+   check_input $PRESENTER
 fi
-
 if [ ! -f $VIEWER ]; then
-    if [ ! -f $SOURCE_FOLDER/$VIEWER ]; then
-        echo $SOURCE_FOLDER/$VIEWER does not exist
-        exit 1
-    fi
-    echo Copying viewer to current folder
-    cp $SOURCE_FOLDER/$VIEWER .
+   check_input $VIEWER
 fi
 
+###################################################################
 # 3. Remux presenter and viewer with a fixed bitrate and resolution
+###################################################################
 if [ -z "$VIDEO_REF" ] && [ ! -f $TMP_PRESENTER ]; then
-    echo Remuxing presenter
-    ffmpeg $FFMPEG_LOG -y -i $PRESENTER -s ${WIDTH}x${HEIGHT} $FFMPEG_OPTIONS $REMUXED_PRESENTER
-    ffmpeg $FFMPEG_LOG -y -i $REMUXED_PRESENTER -filter:v "minterpolate='mi_mode=dup:fps=$FPS'" $TMP_PRESENTER
+   remux $PRESENTER $REMUXED_PRESENTER $TMP_PRESENTER
 fi
-
 if [ ! -f $TMP_VIEWER ]; then
-    echo  Remuxing viewer
-    ffmpeg $FFMPEG_LOG -y -i $VIEWER -s ${WIDTH}x${HEIGHT} $FFMPEG_OPTIONS $REMUXED_VIEWER
-    ffmpeg $FFMPEG_LOG -y -i $REMUXED_VIEWER -filter:v "minterpolate='mi_mode=dup:fps=$FPS'" $TMP_VIEWER
+   remux $VIEWER $REMUXED_VIEWER $TMP_VIEWER
 fi
 
-# 3. Trim presenter and viewer (remove paddings)
-# Extract images per frame (to find out change from padding to video and viceversa)
-
-mkdir -p $JPG_FOLDER
-
+###############################################
+# 4. Cut presenter and viewer (remove paddings)
+###############################################
 if [ -z "$VIDEO_REF" ] && [ ! -f $CUT_PRESENTER ]; then
-    ffmpeg $FFMPEG_LOG -i $TMP_PRESENTER $JPG_FOLDER/%04d$P_SUFFIX
-    jpgs=("$JPG_FOLDER/*$P_SUFFIX")
-    i_jpgs=$(ls -r $jpgs)
-
-    echo "Checking padding in presenter video"
-    for i in $jpgs; do
-        file=$(echo $i)
-        match_image "$file"
-        match=$retval
-        if ! $match; then
-           CUT_PRESENTER_FRAME_FROM=$(echo "$file" | tr -dc '0-9')
-           break
-        fi
-    done
-
-    for i in $i_jpgs; do
-        file=$(echo $i)
-        match_image "$file"
-        match=$retval
-        if ! $match; then
-           CUT_PRESENTER_FRAME_TO=$(echo "$file" | tr -dc '0-9')
-           break
-        fi
-    done
-
-    echo "Cutting presenter from frame $CUT_PRESENTER_FRAME_FROM to $CUT_PRESENTER_FRAME_TO"
-
-    CUT_PRESENTER_TIME_FROM=$(jq -n $CUT_PRESENTER_FRAME_FROM/$FPS)
-    CUT_PRESENTER_TIME_TO=$(jq -n $CUT_PRESENTER_FRAME_TO/$FPS)
-    CUT_PRESENTER_TIME=$(jq -n $CUT_PRESENTER_TIME_TO-$CUT_PRESENTER_TIME_FROM)
-
-    duration $CUT_PRESENTER_TIME_FROM
-    from=$retval
-    duration $CUT_PRESENTER_TIME
-    to=$retval
-    ffmpeg $FFMPEG_LOG -i $TMP_PRESENTER -ss $from -t $to $FFMPEG_OPTIONS -y $CUT_PRESENTER
+   cut_video $TMP_PRESENTER $CUT_PRESENTER $P_SUFFIX
 fi
-
 if [ ! -f $CUT_VIEWER ]; then
-    ffmpeg $FFMPEG_LOG -i $TMP_VIEWER $JPG_FOLDER/%04d$V_SUFFIX
-    jpgs=("$JPG_FOLDER/*$V_SUFFIX")
-    i_jpgs=$(ls -r $jpgs)
-
-    echo "Checking padding in viewer video"
-    for i in $jpgs; do
-        file=$(echo $i)
-        match_image "$file"
-        match=$retval
-        if ! $match; then
-           CUT_VIEWER_FRAME_FROM=$(echo "$file" | tr -dc '0-9')
-           break
-        fi
-    done
-
-    for i in $i_jpgs; do
-        file=$(echo $i)
-        match_image "$file"
-        match=$retval
-        if ! $match; then
-           CUT_VIEWER_FRAME_TO=$(echo "$file" | tr -dc '0-9')
-           break
-        fi
-    done
-
-    echo "Cutting viewer from frame $CUT_VIEWER_FRAME_FROM to $CUT_VIEWER_FRAME_TO"
-
-    CUT_VIEWER_TIME_FROM=$(jq -n $CUT_VIEWER_FRAME_FROM/$FPS)
-    CUT_VIEWER_TIME_TO=$(jq -n $CUT_VIEWER_FRAME_TO/$FPS)
-    CUT_VIEWER_TIME=$(jq -n $CUT_VIEWER_TIME_TO-$CUT_VIEWER_TIME_FROM)
-
-    duration $CUT_VIEWER_TIME_FROM
-    from=$retval
-    duration $CUT_VIEWER_TIME
-    to=$retval
-    ffmpeg $FFMPEG_LOG -i $TMP_VIEWER -ss $from -t $to $FFMPEG_OPTIONS -y $CUT_VIEWER
+   cut_video $TMP_VIEWER $CUT_VIEWER $V_SUFFIX
 fi
 
-# 5. Extract audio to wav
+#########################
+# 5. Extract audio to WAV
+#########################
 if $CALCULATE_AUDIO_QOE && [ -z "$AUDIO_REF" ] && [ ! -f $WAV_PRESENTER ]; then
-    echo "Extracting WAV from presenter"
-    ffmpeg $FFMPEG_LOG -y -i $CUT_PRESENTER $WAV_PRESENTER
-    ffmpeg $FFMPEG_LOG -y -i $CUT_PRESENTER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_PRESENTER
+   extract_wav $CUT_PRESENTER $WAV_PRESENTER
 fi
-
 if $CALCULATE_AUDIO_QOE &&  [ ! -f $WAV_VIEWER ]; then
-    echo "Extracting WAV from viewer"
-    ffmpeg $FFMPEG_LOG -y -i $CUT_VIEWER $WAV_VIEWER
-    ffmpeg $FFMPEG_LOG -y -i $CUT_VIEWER -ar $AUDIO_SAMPLE_RATE resampled_$WAV_VIEWER
+   extract_wav $CUT_VIEWER $WAV_VIEWER
 fi
 
-# 6. Convert videos to YUV_PROFILE
+#########################
+# 6. Convert video to YUV
+#########################
 if [ -z "$VIDEO_REF" ] && [ ! -f $YUV_PRESENTER ]; then
-    echo Converting presenter to $YUV_PROFILE
-    ffmpeg $FFMPEG_LOG -i $CUT_PRESENTER -pix_fmt $YUV_PROFILE -c:v rawvideo -an -y $YUV_PRESENTER
+   convert_yuv $CUT_PRESENTER $YUV_PRESENTER
 fi
-
 if [ ! -f $YUV_VIEWER ]; then
-    echo Converting viewer to $YUV_PROFILE
-    ffmpeg $FFMPEG_LOG -i $CUT_VIEWER -pix_fmt $YUV_PROFILE -c:v rawvideo -an -y $YUV_VIEWER
+   convert_yuv $CUT_VIEWER $YUV_VIEWER
 fi
 
+######################
 # 7. Run VMAF and VQMT
-echo "Calculating VMAF"
-
+######################
 REF=$YUV_PRESENTER
 if [ ! -z "$VIDEO_REF" ]; then
     REF=$VIDEO_REF
 fi
+
+echo "Calculating VMAF"
 $VMAF_PATH/run_vmaf yuv420p $WIDTH $HEIGHT $PWD/$REF $PWD/$YUV_VIEWER --out-fmt json > $PWD/${PREFIX}_vmaf.json && cat $PWD/${PREFIX}_vmaf.json | jq '.frames[].VMAF_score' > $PWD/${PREFIX}_vmaf.csv
 
 echo "Calculating VIFp, SSIM, MS-SSIM, PSNR, PSNR-HVS, and PSNR-HVS-M"
 $VQMT_PATH/vqmt $PWD/$REF $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM >> /dev/null 2>&1
 
+########################
 # 8. Run PESQ and ViSQOL
+########################
 if $CALCULATE_AUDIO_QOE; then
     ORIG_PWD=$PWD
 
@@ -486,7 +487,9 @@ if $CALCULATE_AUDIO_QOE; then
     cd $ORIG_PWD
 fi
 
-# 9. Cleanup
+#######################
+# 9. Cleanup and finish
+#######################
 if $CLEANUP; then
     cleanup
 fi
