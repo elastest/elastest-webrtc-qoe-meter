@@ -21,7 +21,7 @@ FFMPEG_OPTIONS="-c:v libvpx -b:v $VIDEO_BITRATE -pix_fmt $YUV_PROFILE"
 CALCULATE_AUDIO_QOE=false
 CLEANUP=true
 ALIGN_OCR=false
-USAGE="Usage: `basename $0` [-p=prefix] [-w=width] [-h=height] [--calculate_audio_qoe] [--no_cleanup] [--clean] [--clean-all] [-vr=video_ref] [-ar=audio_ref] [--align_ocr]"
+USAGE="Usage: `basename $0` [-p=prefix] [-w=width] [-h=height] [--calculate_audio_qoe] [--no_cleanup] [--clean] [--clean_all] [-vr=video_ref] [-ar=audio_ref] [--align_ocr] [--use_default_ref]"
 
 ##################################################################################
 # FUNCTIONS
@@ -387,6 +387,13 @@ align_ocr() {
 
 for i in "$@"; do
    case $i in
+      --use_default_ref)
+      VIDEO_REF="../test-no-padding.yuv"
+      AUDIO_REF="../test-no-padding.wav"
+      CALCULATE_AUDIO_QOE=true
+      ALIGN_OCR=true
+      shift
+      ;;
       -vr=*|--video_ref=*)
       VIDEO_REF="${i#*=}"
       shift
@@ -425,7 +432,7 @@ for i in "$@"; do
       exit 0
       shift
       ;;
-      --clean-all)
+      --clean_all)
       init
       cleanup
       rm $PREFIX_*.csv $PREFIX_*.txt 2>/dev/null
