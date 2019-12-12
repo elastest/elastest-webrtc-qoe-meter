@@ -45,7 +45,7 @@ public class OpenViduBasicConferenceAudioVideoTest
 
     final Logger log = getLogger(lookup().lookupClass());
 
-    static final int TEST_TIME_SEC = 40;
+    static final int TEST_TIME_SEC = 35;
 
     static final String FAKE_VIDEO = "--use-file-for-fake-video-capture=/home/selenium/test.y4m";
     static final String FAKE_AUDIO = "--use-file-for-fake-audio-capture=/home/selenium/test.wav";

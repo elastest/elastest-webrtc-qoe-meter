@@ -7,7 +7,7 @@
 VIDEO_SAMPLE_URL=https://archive.org/download/e-dv548_lwe08_christa_casebeer_003.ogg/e-dv548_lwe08_christa_casebeer_003.mp4
 WIDTH=640
 HEIGHT=480
-VIDEO_DURATION=00:00:35
+VIDEO_DURATION=00:00:30
 PADDING_DURATION_SEC=5
 FPS=24
 AUDIO_SAMPLE_RATE_HZ=48000
