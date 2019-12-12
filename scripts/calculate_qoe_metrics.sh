@@ -411,7 +411,6 @@ for i in "$@"; do
       VIDEO_REF="../test-no-padding.yuv"
       AUDIO_REF="../test-no-padding.wav"
       CALCULATE_AUDIO_QOE=true
-      ALIGN_OCR=true
       shift
       ;;
       -vr=*|--video_ref=*)
