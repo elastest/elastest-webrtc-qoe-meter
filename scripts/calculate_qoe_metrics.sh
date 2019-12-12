@@ -345,8 +345,12 @@ align_ocr() {
 
    ffmpeg $FFMPEG_LOG -i $video_ocr -qscale:v 2 $JPG_FOLDER/%04d.jpg
 
-   last=0
-   for f in $JPG_FOLDER/*.jpg ; do
+   next=$(($VIDEO_LENGTH_SEC * $FPS))
+   skipped=0
+   ocr_errors=0
+   files=($JPG_FOLDER/*.jpg)
+   for ((i=${#files[@]}-1; i>=0; i--)); do
+      f=${files[$i]}
       filename=$(basename $f)
 
       crop_value=100x45+270+430
@@ -364,17 +368,30 @@ align_ocr() {
 
       if $is_number; then
          #echo "$filename = $frame"
-         i=$(($last+1))
-         while [ $i -le $frame ];do
-            output=$(printf "%04d\n" $i)
+         j=$frame
+         while [ $j -le $next ];do
+            output=$(printf "%04d\n" $j)
             cp $f $cut_folder/${output}.jpg
-            i=$(($i+1))
+            if [ $j -ne $next ]; then
+               skipped=$(($skipped+1))
+            fi
+            j=$(($j+1))
          done
-         last=$frame
+         next=$(($frame-1))
       else
-         echo "Skipping $filename (recognized: $frame)"
+         #echo "Skipping $filename (recognized: $frame)"
+         ocr_errors=$(($ocr_errors+1))
       fi
    done
+   i=1
+   while [ $i -le $next ]; do
+      output=$(printf "%04d\n" $i)
+      cp $f $cut_folder/${output}.jpg
+      i=$(($i+1))
+   done
+
+   echo "Number of frames skipped: $skipped"
+   echo "Number of frames not recognized OCR: $ocr_errors"
 
    if $CALCULATE_AUDIO_QOE; then
       ffmpeg $FFMPEG_LOG -y -framerate $FPS -f image2 -i $cut_folder/%04d.jpg -i $wav_ocr $output_ocr
