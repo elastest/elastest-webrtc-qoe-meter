@@ -21,7 +21,17 @@ DEFAULT_VIDEO_REF=../test-no-padding.yuv
 DEFAULT_AUDIO_REF=../test-no-padding.wav
 FONT=/usr/share/fonts/truetype/msttcorefonts/Arial.ttf
 CLEANUP=true
-USAGE="Usage: `basename $0` [-d=duration] [-p=padding_duration_sec] [--game] [--generate_default_ref] [--no_cleanup]"
+USAGE="Usage: `basename $0` [-d=duration] [-p=padding_duration_sec] [--game] [--generate_default_ref] [--no_cleanup] [--clean]"
+
+##################################################################################
+# FUNCTIONS
+##################################################################################
+
+cleanup() {
+   echo "Deleting temporal files"
+   rm -rf test-no-frame-number.mp4 test-no-padding.mp4 padding.mp4 test.mp4
+}
+
 
 ##################################################################################
 # PARSE ARGUMENTS
@@ -49,6 +59,11 @@ for i in "$@"; do
       ;;
       --no_cleanup)
       CLEANUP=false
+      shift
+      ;;
+      --clean)
+      cleanup
+      exit 0
       shift
       ;;
       *) # unknown option
@@ -121,6 +136,5 @@ fi
 # 8. Delete temporal video files
 ################################
 if $CLEANUP; then
-    echo "Deleting temporal files"
-    rm test-no-frame-number.mp4 test-no-padding.mp4 padding.mp4 test.mp4
+   cleanup
 fi

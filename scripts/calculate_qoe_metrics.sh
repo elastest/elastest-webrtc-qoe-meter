@@ -21,7 +21,7 @@ FFMPEG_OPTIONS="-c:v libvpx -b:v $VIDEO_BITRATE -pix_fmt $YUV_PROFILE"
 CALCULATE_AUDIO_QOE=false
 CLEANUP=true
 ALIGN_OCR=false
-USAGE="Usage: `basename $0` [-p=prefix] [-w=width] [-h=height] [--calculate_audio_qoe] [--no_cleanup] [--clean] [--clean_all] [-vr=video_ref] [-ar=audio_ref] [--align_ocr] [--use_default_ref]"
+USAGE="Usage: `basename $0` [-p=prefix] [-w=width] [-h=height] [--calculate_audio_qoe] [--no_cleanup] [--clean] [-vr=video_ref] [-ar=audio_ref] [--align_ocr] [--use_default_ref]"
 
 ##################################################################################
 # FUNCTIONS
@@ -390,8 +390,8 @@ align_ocr() {
       i=$(($i+1))
    done
 
-   echo "Number of frames skipped: $skipped"
-   echo "Number of frames not recognized OCR: $ocr_errors"
+   echo "Number of frames skipped in $output_ocr: $skipped"
+   echo "Number of frames not recognized by OCR in $output_ocr: $ocr_errors"
 
    if $CALCULATE_AUDIO_QOE; then
       ffmpeg $FFMPEG_LOG -y -framerate $FPS -f image2 -i $cut_folder/%04d.jpg -i $wav_ocr $output_ocr
@@ -446,12 +446,6 @@ for i in "$@"; do
       shift
       ;;
       --clean)
-      init
-      cleanup
-      exit 0
-      shift
-      ;;
-      --clean_all)
       init
       cleanup
       rm $PREFIX_*.csv $PREFIX_*.txt 2>/dev/null
