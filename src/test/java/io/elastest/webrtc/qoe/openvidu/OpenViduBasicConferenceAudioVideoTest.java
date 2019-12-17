@@ -75,8 +75,6 @@ public class OpenViduBasicConferenceAudioVideoTest
 
     @BeforeAll
     static void setupAll() {
-        seleniumExtension.getConfig()
-                .setChromeBetaImage("elastestbrowsers/chrome:78");
         seleniumExtension.getConfig().setBrowserSessionTimeoutDuration("5m0s");
     }
 
