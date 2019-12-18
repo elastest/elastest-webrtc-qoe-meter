@@ -7,7 +7,7 @@
     <groupId>io.elastest.eus</groupId>
     <artifactId>elastest-webrtc-qoe-meter</artifactId>
     <packaging>jar</packaging>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
 
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Experiments aimed to measure the Quality of Experience (QoE) of WebRTC applications.</description>
