@@ -14,11 +14,9 @@
  * limitations under the License.
  *
  */
-package io.elastest.webrtc.qoe.dummy;
+package io.elastest.webrtc.qoe.webrtcsamples;
 
 import static java.lang.invoke.MethodHandles.lookup;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import org.junit.jupiter.api.Test;
@@ -32,24 +30,32 @@ import io.github.bonigarcia.seljup.Options;
 import io.github.bonigarcia.seljup.SeleniumExtension;
 
 @ExtendWith(SeleniumExtension.class)
-public class WebRtcSamplesTest {
+public class WebRtcSamples2Test {
 
     final Logger log = getLogger(lookup().lookupClass());
+
+    static final String SUT_URL = "https://webrtc.github.io/samples/src/content/peerconnection/bandwidth/";
+    static final String FAKE_DEVICE = "--use-fake-device-for-media-stream";
+    static final String FAKE_UI = "--use-fake-ui-for-media-stream";
+    static final String FAKE_VIDEO = "--use-file-for-fake-video-capture=test.y4m";
+    static final String FAKE_AUDIO = "--use-file-for-fake-audio-capture=test.wav";
 
     @Options
     ChromeOptions chromeOptions = new ChromeOptions();
     {
-        chromeOptions.addArguments("--use-fake-device-for-media-stream",
-                "--use-fake-ui-for-media-stream");
+        chromeOptions.addArguments(FAKE_DEVICE, FAKE_UI, FAKE_VIDEO,
+                FAKE_AUDIO);
     }
 
     @Test
-    void webrtcTest(ChromeDriver driver) {
-        String sut = "https://webrtc.github.io/samples/src/content/devices/input-output/";
-        log.debug("Testing {} with {}", sut, driver);
-        driver.get(sut);
-        assertThat(driver.findElement(By.id("video")).getTagName(),
-                equalTo("video"));
+    void webrtcTest(ChromeDriver driver) throws InterruptedException {
+        log.debug("Testing {} with {}", SUT_URL, driver);
+        driver.get(SUT_URL);
+        driver.findElement(By.id("callButton")).click();
+
+        Thread.sleep(5000);
+
+        driver.findElement(By.id("hangupButton")).click();
     }
 
 }

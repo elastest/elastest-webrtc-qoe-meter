@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.webrtc.qoe.dummy;
+package io.elastest.webrtc.qoe.webrtcsamples;
 
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.junit.jupiter.api.Assertions.assertTrue;

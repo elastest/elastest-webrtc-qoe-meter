@@ -14,48 +14,42 @@
  * limitations under the License.
  *
  */
-package io.elastest.webrtc.qoe.dummy;
+package io.elastest.webrtc.qoe.webrtcsamples;
 
 import static java.lang.invoke.MethodHandles.lookup;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.slf4j.LoggerFactory.getLogger;
-
-import java.io.File;
-import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.slf4j.Logger;
 
-import io.elastest.webrtc.qoe.ElasTestRemoteControlParent;
-import io.github.bonigarcia.seljup.Arguments;
+import io.github.bonigarcia.seljup.Options;
 import io.github.bonigarcia.seljup.SeleniumExtension;
 
 @ExtendWith(SeleniumExtension.class)
-public class RecordWebRtcSamplesTest extends ElasTestRemoteControlParent {
+public class WebRtcSamplesTest {
 
     final Logger log = getLogger(lookup().lookupClass());
 
-    static final String SUT_URL = "https://webrtc.github.io/samples/src/content/devices/input-output/";
-    static final int TEST_TIME_SEC = 3;
-
-    ChromeDriver driver;
-
-    public RecordWebRtcSamplesTest(
-            @Arguments({ "--use-fake-device-for-media-stream",
-                    "--use-fake-ui-for-media-stream" }) ChromeDriver driver) {
-        super(SUT_URL, driver);
-        this.driver = driver;
+    @Options
+    ChromeOptions chromeOptions = new ChromeOptions();
+    {
+        chromeOptions.addArguments("--use-fake-device-for-media-stream",
+                "--use-fake-ui-for-media-stream");
     }
 
     @Test
-    void webrtcTest() throws IOException {
-        startRecording(driver);
-        waitSeconds(TEST_TIME_SEC);
-        stopRecording(driver);
-        File recording = getRecording(driver);
-        assertTrue(recording.exists());
+    void webrtcTest(ChromeDriver driver) {
+        String sut = "https://webrtc.github.io/samples/src/content/devices/input-output/";
+        log.debug("Testing {} with {}", sut, driver);
+        driver.get(sut);
+        assertThat(driver.findElement(By.id("video")).getTagName(),
+                equalTo("video"));
     }
 
 }

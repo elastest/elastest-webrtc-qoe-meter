@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.webrtc.qoe.dummy;
+package io.elastest.webrtc.qoe.webrtcsamples;
 
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -25,7 +25,6 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.slf4j.Logger;
 
@@ -34,39 +33,29 @@ import io.github.bonigarcia.seljup.Arguments;
 import io.github.bonigarcia.seljup.SeleniumExtension;
 
 @ExtendWith(SeleniumExtension.class)
-public class RecordWebRtcSamples2Test extends ElasTestRemoteControlParent {
+public class RecordWebRtcSamplesTest extends ElasTestRemoteControlParent {
 
     final Logger log = getLogger(lookup().lookupClass());
 
-    static final String SUT_URL = "https://webrtc.github.io/samples/src/content/peerconnection/pc1/";
-    static final String FAKE_DEVICE = "--use-fake-device-for-media-stream";
-    static final String FAKE_UI = "--use-fake-ui-for-media-stream";
-    static final String FAKE_VIDEO = "--use-file-for-fake-video-capture=test.y4m";
-    static final String FAKE_AUDIO = "--use-file-for-fake-audio-capture=test.wav";
-    static final int TEST_TIME_SEC = 10;
+    static final String SUT_URL = "https://webrtc.github.io/samples/src/content/devices/input-output/";
+    static final int TEST_TIME_SEC = 3;
 
     ChromeDriver driver;
 
-    public RecordWebRtcSamples2Test(@Arguments({ FAKE_DEVICE, FAKE_UI,
-            FAKE_VIDEO, FAKE_AUDIO }) ChromeDriver driver) {
+    public RecordWebRtcSamplesTest(
+            @Arguments({ "--use-fake-device-for-media-stream",
+                    "--use-fake-ui-for-media-stream" }) ChromeDriver driver) {
         super(SUT_URL, driver);
         this.driver = driver;
     }
 
     @Test
     void webrtcTest() throws IOException {
-        driver.findElement(By.id("startButton")).click();
-        waitSeconds(1);
-
-        driver.findElement(By.id("callButton")).click();
-        startRecording(driver, "pc2.getRemoteStreams()[0]");
+        startRecording(driver);
         waitSeconds(TEST_TIME_SEC);
         stopRecording(driver);
-
         File recording = getRecording(driver);
         assertTrue(recording.exists());
-
-        driver.findElement(By.id("hangupButton")).click();
     }
 
 }
