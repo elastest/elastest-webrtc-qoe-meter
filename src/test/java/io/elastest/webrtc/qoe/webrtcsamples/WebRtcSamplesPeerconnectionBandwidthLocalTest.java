@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.support.ui.Select;
 import org.slf4j.Logger;
 
 import io.elastest.webrtc.qoe.ElasTestRemoteControlParent;
@@ -45,7 +46,7 @@ public class WebRtcSamplesPeerconnectionBandwidthLocalTest
     static final String FAKE_UI = "--use-fake-ui-for-media-stream";
     static final String FAKE_VIDEO = "--use-file-for-fake-video-capture=test.y4m";
     static final String FAKE_AUDIO = "--use-file-for-fake-audio-capture=test.wav";
-    static final int TEST_TIME_SEC = 10;
+    static final int TEST_TIME_SEC = 35;
 
     ChromeDriver driver;
 
@@ -61,7 +62,12 @@ public class WebRtcSamplesPeerconnectionBandwidthLocalTest
     void webrtcTest() throws IOException {
         driver.findElement(By.id("callButton")).click();
 
-        // For recording receiver
+        // Set bandwidth to 2000bps
+        waitSeconds(1);
+        Select bandwidth = new Select(driver.findElement(By.id("bandwidth")));
+        bandwidth.selectByVisibleText("2000");
+
+        // Star recording in viewer
         startRecording(driver, "pc2.getRemoteStreams()[0]");
 
         waitSeconds(TEST_TIME_SEC);
