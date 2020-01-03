@@ -34,7 +34,7 @@ import io.github.bonigarcia.seljup.Arguments;
 import io.github.bonigarcia.seljup.SeleniumExtension;
 
 @ExtendWith(SeleniumExtension.class)
-public class WebRtcSamplesPeerconnectionRecordingTest extends ElasTestRemoteControlParent {
+public class WebRtcSamplesPeerconnectionLocalTest extends ElasTestRemoteControlParent {
 
     final Logger log = getLogger(lookup().lookupClass());
 
@@ -47,7 +47,7 @@ public class WebRtcSamplesPeerconnectionRecordingTest extends ElasTestRemoteCont
 
     ChromeDriver driver;
 
-    public WebRtcSamplesPeerconnectionRecordingTest(@Arguments({ FAKE_DEVICE, FAKE_UI,
+    public WebRtcSamplesPeerconnectionLocalTest(@Arguments({ FAKE_DEVICE, FAKE_UI,
             FAKE_VIDEO, FAKE_AUDIO }) ChromeDriver driver) {
         super(SUT_URL, driver);
         this.driver = driver;
