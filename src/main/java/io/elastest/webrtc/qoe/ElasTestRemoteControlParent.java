@@ -292,7 +292,7 @@ public class ElasTestRemoteControlParent {
 
     // Simulate network conditions using NetEm
     public void simulateNetwork(SeleniumExtension seleniumExtension,
-            WebDriver driver, String iface, String tcType, int tcValue)
+            WebDriver driver, String iface, String tcType, float tcValue)
             throws DockerException, InterruptedException {
         String[] tcCommand;
 
