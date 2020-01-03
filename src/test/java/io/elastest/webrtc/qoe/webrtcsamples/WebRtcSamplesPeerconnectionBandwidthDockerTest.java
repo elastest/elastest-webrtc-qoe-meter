@@ -17,7 +17,7 @@
 package io.elastest.webrtc.qoe.webrtcsamples;
 
 import static io.github.bonigarcia.seljup.BrowserType.CHROME;
-import static java.lang.Integer.parseInt;
+import static java.lang.Float.parseFloat;
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -53,8 +53,9 @@ public class WebRtcSamplesPeerconnectionBandwidthDockerTest
     static final int TEST_TIME_SEC = 35;
 
     // The following values are valid: loss, delay, jitter
-    static final String TC_TYPE = System.getProperty("tc.type", "");
-    static final int TC_VALUE = parseInt(System.getProperty("tc.value", "0"));
+    static final String TC_TYPE = System.getProperty("tc.type", "loss");
+    static final float TC_VALUE = parseFloat(
+            System.getProperty("tc.value", "22.5"));
 
     WebDriver driver;
 
