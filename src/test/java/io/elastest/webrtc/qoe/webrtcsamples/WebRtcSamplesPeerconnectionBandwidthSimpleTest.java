@@ -17,59 +17,43 @@
 package io.elastest.webrtc.qoe.webrtcsamples;
 
 import static java.lang.invoke.MethodHandles.lookup;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
-
-import java.io.File;
-import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.slf4j.Logger;
 
-import io.elastest.webrtc.qoe.ElasTestRemoteControlParent;
-import io.github.bonigarcia.seljup.Arguments;
+import io.github.bonigarcia.seljup.Options;
 import io.github.bonigarcia.seljup.SeleniumExtension;
 
 @ExtendWith(SeleniumExtension.class)
-public class WebRtcSamplesPeerconnectionBandwidthTest
-        extends ElasTestRemoteControlParent {
+public class WebRtcSamplesPeerconnectionBandwidthSimpleTest {
 
     final Logger log = getLogger(lookup().lookupClass());
 
     static final String SUT_URL = "https://webrtc.github.io/samples/src/content/peerconnection/bandwidth/";
-    static final String DISABLE_SMOOTHNESS = "--disable-rtc-smoothness-algorithm";
-    static final String FAKE_DEVICE = "--use-fake-device-for-media-stream=fps=60";
+    static final String FAKE_DEVICE = "--use-fake-device-for-media-stream";
     static final String FAKE_UI = "--use-fake-ui-for-media-stream";
     static final String FAKE_VIDEO = "--use-file-for-fake-video-capture=test.y4m";
     static final String FAKE_AUDIO = "--use-file-for-fake-audio-capture=test.wav";
-    static final int TEST_TIME_SEC = 10;
 
-    ChromeDriver driver;
-
-    public WebRtcSamplesPeerconnectionBandwidthTest(
-            @Arguments({ DISABLE_SMOOTHNESS, FAKE_DEVICE, FAKE_UI, FAKE_VIDEO,
-                    FAKE_AUDIO }) ChromeDriver driver) {
-        super(SUT_URL, driver);
-        this.driver = driver;
-        forceGetUserMediaVideoAndAudio(driver);
+    @Options
+    ChromeOptions chromeOptions = new ChromeOptions();
+    {
+        chromeOptions.addArguments(FAKE_DEVICE, FAKE_UI, FAKE_VIDEO,
+                FAKE_AUDIO);
     }
 
     @Test
-    void webrtcTest() throws IOException {
+    void webrtcTest(ChromeDriver driver) throws InterruptedException {
+        log.debug("Testing {} with {}", SUT_URL, driver);
+        driver.get(SUT_URL);
         driver.findElement(By.id("callButton")).click();
 
-        // For recording receiver
-        startRecording(driver, "pc2.getRemoteStreams()[0]");
-
-        waitSeconds(TEST_TIME_SEC);
-        stopRecording(driver);
-
-        String viewerRecordingName = "viewer.webm";
-        File recording = getRecording(driver, viewerRecordingName);
-        assertTrue(recording.exists());
+        Thread.sleep(5000);
 
         driver.findElement(By.id("hangupButton")).click();
     }
