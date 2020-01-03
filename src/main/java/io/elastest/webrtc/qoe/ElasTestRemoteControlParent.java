@@ -44,6 +44,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.slf4j.Logger;
 
 import com.spotify.docker.client.exceptions.DockerException;
@@ -335,6 +336,17 @@ public class ElasTestRemoteControlParent {
         }
 
         execCommandInContainer(seleniumExtension, driver, tcCommand);
+    }
+
+    // Monkey patching of getUserMedia to force using video and audio
+    public void forceGetUserMediaVideoAndAudio(WebDriver driver) {
+        ((RemoteWebDriver) driver)
+                .executeScript("let gum = navigator.mediaDevices.getUserMedia;"
+                        + "navigator.mediaDevices.getUserMedia = function() {"
+                        + "  return new Promise((resolve, reject) => {"
+                        + "    gum.bind(navigator.mediaDevices)({video: true, audio: true})"
+                        + "      .then(stream => resolve(stream))"
+                        + "      .catch(reject);" + "  });" + "}");
     }
 
 }
