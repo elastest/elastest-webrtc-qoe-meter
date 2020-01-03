@@ -32,7 +32,7 @@ import io.github.bonigarcia.seljup.Options;
 import io.github.bonigarcia.seljup.SeleniumExtension;
 
 @ExtendWith(SeleniumExtension.class)
-public class WebRtcSamplesTest {
+public class WebRtcSamplesInputOutputTest {
 
     final Logger log = getLogger(lookup().lookupClass());
 
