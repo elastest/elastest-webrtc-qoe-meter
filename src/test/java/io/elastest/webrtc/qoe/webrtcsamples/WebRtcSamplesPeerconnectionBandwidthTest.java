@@ -25,6 +25,7 @@ import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.slf4j.Logger;
 
@@ -33,29 +34,44 @@ import io.github.bonigarcia.seljup.Arguments;
 import io.github.bonigarcia.seljup.SeleniumExtension;
 
 @ExtendWith(SeleniumExtension.class)
-public class WebRtcSamplesPeerconnectionRecording1Test extends ElasTestRemoteControlParent {
+public class WebRtcSamplesPeerconnectionBandwidthTest extends ElasTestRemoteControlParent {
 
     final Logger log = getLogger(lookup().lookupClass());
 
-    static final String SUT_URL = "https://webrtc.github.io/samples/src/content/devices/input-output/";
-    static final int TEST_TIME_SEC = 3;
+    static final String SUT_URL = "http://localhost:8080/src/content/peerconnection/bandwidth/";
+    static final String DISABLE_SMOOTHNESS = "--disable-rtc-smoothness-algorithm";
+    static final String FAKE_DEVICE = "--use-fake-device-for-media-stream=fps=60";
+    static final String FAKE_UI = "--use-fake-ui-for-media-stream";
+    static final String FAKE_VIDEO = "--use-file-for-fake-video-capture=test.y4m";
+    static final String FAKE_AUDIO = "--use-file-for-fake-audio-capture=test.wav";
+    static final int TEST_TIME_SEC = 10;
 
     ChromeDriver driver;
 
-    public WebRtcSamplesPeerconnectionRecording1Test(
-            @Arguments({ "--use-fake-device-for-media-stream",
-                    "--use-fake-ui-for-media-stream" }) ChromeDriver driver) {
+    public WebRtcSamplesPeerconnectionBandwidthTest(
+            @Arguments({ DISABLE_SMOOTHNESS, FAKE_DEVICE, FAKE_UI, FAKE_VIDEO,
+                    FAKE_AUDIO }) ChromeDriver driver) {
         super(SUT_URL, driver);
         this.driver = driver;
     }
 
     @Test
     void webrtcTest() throws IOException {
-        startRecording(driver);
+        driver.findElement(By.id("callButton")).click();
+
+        // For recording sender
+        // startRecording(driver, "pc1.getLocalStreams()[0]");
+
+        // For recording receiver
+        startRecording(driver, "pc2.getRemoteStreams()[0]");
+
         waitSeconds(TEST_TIME_SEC);
         stopRecording(driver);
+
         File recording = getRecording(driver);
         assertTrue(recording.exists());
+
+        driver.findElement(By.id("hangupButton")).click();
     }
 
 }
