@@ -54,6 +54,7 @@ public class OpenViduBasicConferenceAudioVideoTest
     static final String VIEWER_NAME = "viewer";
     static final String SESSION_NAME = "qoe-session";
     static final String WEBM_EXT = ".webm";
+    static final String IFACE = "eth0";
 
     // The following values are valid: loss, delay, jitter
     static final String TC_TYPE = System.getProperty("tc.type", "");
@@ -103,7 +104,8 @@ public class OpenViduBasicConferenceAudioVideoTest
 
         if (TC_VALUE > 0) {
             // Simulate packet loss or delay or jitter in viewer container
-            simulateNetwork(seleniumExtension, presenter, TC_TYPE, TC_VALUE);
+            simulateNetwork(seleniumExtension, presenter, IFACE, TC_TYPE,
+                    TC_VALUE);
         }
 
         // Wait
@@ -111,7 +113,7 @@ public class OpenViduBasicConferenceAudioVideoTest
 
         if (TC_VALUE > 0) {
             // Reset network
-            resetNetwork(seleniumExtension, presenter, TC_TYPE);
+            resetNetwork(seleniumExtension, presenter, IFACE, TC_TYPE);
         }
 
         // Stop recordings

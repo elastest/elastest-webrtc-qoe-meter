@@ -291,24 +291,24 @@ public class ElasTestRemoteControlParent {
 
     // Simulate network conditions using NetEm
     public void simulateNetwork(SeleniumExtension seleniumExtension,
-            WebDriver driver, String tcType, int tcValue)
+            WebDriver driver, String iface, String tcType, int tcValue)
             throws DockerException, InterruptedException {
         String[] tcCommand;
 
         switch (tcType.toLowerCase()) {
         case "delay":
             tcCommand = new String[] { "sudo", "tc", "qdisc", "add", "dev",
-                    "eth0", "root", "netem", "delay", tcValue + "ms" };
+                    iface, "root", "netem", "delay", tcValue + "ms" };
             break;
         case "jitter":
             tcCommand = new String[] { "sudo", "tc", "qdisc", "add", "dev",
-                    "eth0", "root", "netem", "delay", tcValue + "ms",
+                    iface, "root", "netem", "delay", tcValue + "ms",
                     tcValue + "ms", "distribution", "normal" };
             break;
         case "loss":
         default:
             tcCommand = new String[] { "sudo", "tc", "qdisc", "add", "dev",
-                    "eth0", "root", "netem", "loss", tcValue + "%" };
+                    iface, "root", "netem", "loss", tcValue + "%" };
             break;
         }
 
@@ -317,7 +317,7 @@ public class ElasTestRemoteControlParent {
 
     // Reset network using NetEm
     public void resetNetwork(SeleniumExtension seleniumExtension,
-            WebDriver driver, String tcType)
+            WebDriver driver, String iface, String tcType)
             throws DockerException, InterruptedException {
         String[] tcCommand;
 
@@ -325,12 +325,12 @@ public class ElasTestRemoteControlParent {
         case "delay":
         case "jitter":
             tcCommand = new String[] { "sudo", "tc", "qdisc", "replace", "dev",
-                    "eth0", "root", "netem", "delay", "0ms", "0ms" };
+                    iface, "root", "netem", "delay", "0ms", "0ms" };
             break;
         case "loss":
         default:
             tcCommand = new String[] { "sudo", "tc", "qdisc", "replace", "dev",
-                    "eth0", "root", "netem", "loss", "0%" };
+                    iface, "root", "netem", "loss", "0%" };
             break;
         }
 

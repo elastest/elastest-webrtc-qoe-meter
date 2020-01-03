@@ -53,6 +53,7 @@ public class OpenViduBasicConferencePacketLossTest
     static final String SESSION_NAME = "qoe-session";
     static final String WEBM_EXT = ".webm";
     static final String TC_TYPE = "loss";
+    static final String IFACE = "eth0";
 
     static final int PACKET_LOSS_PERCENTAGE = Integer
             .parseInt(System.getProperty("packet.loss", "0"));
@@ -100,7 +101,7 @@ public class OpenViduBasicConferencePacketLossTest
 
         if (PACKET_LOSS_PERCENTAGE > 0) {
             // Simulate packet loss in viewer container
-            simulateNetwork(seleniumExtension, presenter, TC_TYPE,
+            simulateNetwork(seleniumExtension, presenter, IFACE, TC_TYPE,
                     PACKET_LOSS_PERCENTAGE);
         }
 
@@ -109,7 +110,7 @@ public class OpenViduBasicConferencePacketLossTest
 
         if (PACKET_LOSS_PERCENTAGE > 0) {
             // Reset packet loss
-            resetNetwork(seleniumExtension, presenter, TC_TYPE);
+            resetNetwork(seleniumExtension, presenter, IFACE, TC_TYPE);
         }
 
         // Stop recordings
