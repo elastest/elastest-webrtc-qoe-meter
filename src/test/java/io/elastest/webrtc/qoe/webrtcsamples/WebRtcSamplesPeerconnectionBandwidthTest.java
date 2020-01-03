@@ -34,11 +34,12 @@ import io.github.bonigarcia.seljup.Arguments;
 import io.github.bonigarcia.seljup.SeleniumExtension;
 
 @ExtendWith(SeleniumExtension.class)
-public class WebRtcSamplesPeerconnectionBandwidthTest extends ElasTestRemoteControlParent {
+public class WebRtcSamplesPeerconnectionBandwidthTest
+        extends ElasTestRemoteControlParent {
 
     final Logger log = getLogger(lookup().lookupClass());
 
-    static final String SUT_URL = "http://localhost:8080/src/content/peerconnection/bandwidth/";
+    static final String SUT_URL = "https://webrtc.github.io/samples/src/content/peerconnection/bandwidth/";
     static final String DISABLE_SMOOTHNESS = "--disable-rtc-smoothness-algorithm";
     static final String FAKE_DEVICE = "--use-fake-device-for-media-stream=fps=60";
     static final String FAKE_UI = "--use-fake-ui-for-media-stream";
@@ -53,14 +54,12 @@ public class WebRtcSamplesPeerconnectionBandwidthTest extends ElasTestRemoteCont
                     FAKE_AUDIO }) ChromeDriver driver) {
         super(SUT_URL, driver);
         this.driver = driver;
+        forceGetUserMediaVideoAndAudio(driver);
     }
 
     @Test
     void webrtcTest() throws IOException {
         driver.findElement(By.id("callButton")).click();
-
-        // For recording sender
-        // startRecording(driver, "pc1.getLocalStreams()[0]");
 
         // For recording receiver
         startRecording(driver, "pc2.getRemoteStreams()[0]");
@@ -68,7 +67,8 @@ public class WebRtcSamplesPeerconnectionBandwidthTest extends ElasTestRemoteCont
         waitSeconds(TEST_TIME_SEC);
         stopRecording(driver);
 
-        File recording = getRecording(driver);
+        String viewerRecordingName = "viewer.webm";
+        File recording = getRecording(driver, viewerRecordingName);
         assertTrue(recording.exists());
 
         driver.findElement(By.id("hangupButton")).click();
