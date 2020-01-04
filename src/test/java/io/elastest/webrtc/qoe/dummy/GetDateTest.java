@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package io.elastest.webrtc.qoe.sync;
+package io.elastest.webrtc.qoe.dummy;
 
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.hamcrest.CoreMatchers.notNullValue;
