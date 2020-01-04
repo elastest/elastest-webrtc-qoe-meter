@@ -54,8 +54,8 @@ public class AppRtcAdvancedTest extends ElasTestRemoteControlParent {
     static final int TEST_TIME_SEC = 35;
 
     // The following values are valid: loss, delay, jitter
-    static final String TC_TYPE = System.getProperty("tc.type", "loss");
-    static final int TC_VALUE = parseInt(System.getProperty("tc.value", "30"));
+    static final String TC_TYPE = System.getProperty("tc.type", "");
+    static final int TC_VALUE = parseInt(System.getProperty("tc.value", "0"));
 
     WebDriver presenter, viewer;
 
