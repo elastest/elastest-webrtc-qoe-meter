@@ -91,6 +91,18 @@ ElasTestRemoteControl.prototype.recordingToData = function() {
 }
 
 /*
+ * Override RTCPeerConnection
+ */
+var peerConnections = [];
+var origPeerConnection = window.RTCPeerConnection;
+window.RTCPeerConnection = function(pcConfig, pcConstraints) {
+	var pc = new origPeerConnection(pcConfig, pcConstraints);
+	peerConnections.push(pc);
+	return pc;
+}
+window.RTCPeerConnection.prototype = origPeerConnection.prototype;
+
+/*
  * Instantiation of ElasTestRemoteControl object
  */
 var elasTestRemoteControl = new ElasTestRemoteControl();
