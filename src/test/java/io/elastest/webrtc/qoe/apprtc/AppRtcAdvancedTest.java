@@ -79,8 +79,7 @@ public class AppRtcAdvancedTest extends ElasTestRemoteControlParent {
         clearAndSendKeysToElementById(viewer, "room-id-input", SESSION_NAME);
         viewer.findElement(By.id("join-button")).click();
 
-        // Recordings
-        startRecording(presenter, "peerConnections[0].getLocalStreams()[0]");
+        // Start recording in viewer
         startRecording(viewer, "peerConnections[0].getRemoteStreams()[0]");
 
         // Simulate packet loss or delay or jitter in viewer container
@@ -98,16 +97,8 @@ public class AppRtcAdvancedTest extends ElasTestRemoteControlParent {
             resetNetwork(seleniumExtension, presenter, IFACE, TC_TYPE);
         }
 
-        // Stop recordings
-        stopRecording(presenter);
+        // Stop recording
         stopRecording(viewer);
-
-        String presenterRecordingName = TC_VALUE + TC_TYPE + "-"
-                + PRESENTER_NAME + WEBM_EXT;
-        File presenterRecording = getRecording(presenter,
-                presenterRecordingName);
-        assertTrue(presenterRecording.exists());
-
         String viewerRecordingName = TC_VALUE + TC_TYPE + "-" + VIEWER_NAME
                 + WEBM_EXT;
         File viewerRecording = getRecording(viewer, viewerRecordingName);
