@@ -71,18 +71,18 @@ public class AppRtcAdvancedTest extends ElasTestRemoteControlParent {
 
     @Test
     void appRtcTest() throws Exception {
-        // Presenter
+        // Start presenter
         clearAndSendKeysToElementById(presenter, "room-id-input", SESSION_NAME);
         presenter.findElement(By.id("join-button")).click();
 
-        // Viewer
+        // Start viewer
         clearAndSendKeysToElementById(viewer, "room-id-input", SESSION_NAME);
         viewer.findElement(By.id("join-button")).click();
 
         // Start recording in viewer
         startRecording(viewer, "peerConnections[0].getRemoteStreams()[0]");
 
-        // Simulate packet loss or delay or jitter in viewer container
+        // Simulate packet loss delay or jitter in presenter container
         if (TC_VALUE > 0) {
             simulateNetwork(seleniumExtension, presenter, IFACE, TC_TYPE,
                     TC_VALUE);
