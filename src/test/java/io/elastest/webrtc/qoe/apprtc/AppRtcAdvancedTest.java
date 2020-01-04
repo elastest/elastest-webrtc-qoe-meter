@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.slf4j.Logger;
 
 import io.elastest.webrtc.qoe.ElasTestRemoteControlParent;
@@ -62,8 +63,7 @@ public class AppRtcAdvancedTest extends ElasTestRemoteControlParent {
     public AppRtcAdvancedTest(@Arguments({ FAKE_DEVICE, FAKE_UI, FAKE_VIDEO,
             FAKE_AUDIO }) @DockerBrowser(type = CHROME, version = "beta", volumes = {
                     "~:/home/selenium" }) WebDriver presenter,
-            @Arguments({ FAKE_DEVICE,
-                    FAKE_UI }) @DockerBrowser(type = CHROME, version = "beta") WebDriver viewer) {
+            @Arguments({ FAKE_DEVICE, FAKE_UI }) ChromeDriver viewer) {
         super(SUT_URL, presenter, viewer);
         this.presenter = presenter;
         this.viewer = viewer;
