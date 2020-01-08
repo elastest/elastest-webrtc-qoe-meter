@@ -21,7 +21,8 @@ FFMPEG_OPTIONS="-c:v libvpx -b:v $VIDEO_BITRATE -pix_fmt $YUV_PROFILE"
 CALCULATE_AUDIO_QOE=false
 CLEANUP=true
 ALIGN_OCR=false
-USAGE="Usage: `basename $0` [-p=prefix] [-w=width] [-h=height] [--calculate_audio_qoe] [--no_cleanup] [--clean] [-vr=video_ref] [-ar=audio_ref] [--align_ocr] [--use_default_ref]"
+ONLY_VMAF=false
+USAGE="Usage: `basename $0` [-p=prefix] [-w=width] [-h=height] [--calculate_audio_qoe] [--no_cleanup] [--clean] [-vr=video_ref] [-ar=audio_ref] [--align_ocr] [--use_default_ref] [--only_vmaf]"
 
 ##################################################################################
 # FUNCTIONS
@@ -410,6 +411,10 @@ align_ocr() {
 
 for i in "$@"; do
    case $i in
+      --only_vmaf)
+      ONLY_VMAF=true
+      shift
+      ;;
       --use_default_ref)
       VIDEO_REF="../test-no-padding.yuv"
       AUDIO_REF="../test-no-padding.wav"
@@ -559,13 +564,15 @@ fi
 echo "Calculating VMAF"
 $VMAF_PATH/run_vmaf yuv420p $WIDTH $HEIGHT $PWD/$REF $PWD/$YUV_VIEWER --out-fmt json > $PWD/${PREFIX}_vmaf.json && cat $PWD/${PREFIX}_vmaf.json | jq '.frames[].VMAF_score' > $PWD/${PREFIX}_vmaf.csv
 
-echo "Calculating VIFp, SSIM, MS-SSIM, PSNR, PSNR-HVS, and PSNR-HVS-M"
-$VQMT_PATH/vqmt $PWD/$REF $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM >> /dev/null 2>&1
+if ! $ONLY_VMAF; then
+    echo "Calculating VIFp, SSIM, MS-SSIM, PSNR, PSNR-HVS, and PSNR-HVS-M"
+    $VQMT_PATH/vqmt $PWD/$REF $PWD/$YUV_VIEWER $HEIGHT $WIDTH 1500 1 $PREFIX PSNR SSIM VIFP MSSSIM PSNRHVS PSNRHVSM >> /dev/null 2>&1
+fi
 
 ########################
 # 9. Run PESQ and ViSQOL
 ########################
-if $CALCULATE_AUDIO_QOE; then
+if $CALCULATE_AUDIO_QOE && ! $ONLY_VMAF; then
     ORIG_PWD=$PWD
 
     REF_PESQ=resampled_$WAV_PRESENTER
