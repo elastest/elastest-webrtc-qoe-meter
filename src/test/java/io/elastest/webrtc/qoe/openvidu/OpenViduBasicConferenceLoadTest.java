@@ -61,7 +61,7 @@ public class OpenViduBasicConferenceLoadTest
     // FIXME: Use proper IP for URL (external Docker to generate load)
     public OpenViduBasicConferenceLoadTest(
             @Arguments({ FAKE_DEVICE, FAKE_UI,
-                    FAKE_FILE }) ChromeDriver presenter,
+                    FAKE_VIDEO }) ChromeDriver presenter,
             @Arguments({ FAKE_DEVICE, FAKE_UI }) WebDriver viewer,
             @Arguments({ FAKE_DEVICE,
                     FAKE_UI }) @DockerBrowser(type = CHROME, size = NUM_VIEWERS, url = "http://192.168.0.113:2375") List<WebDriver> viewers)

@@ -57,8 +57,10 @@ public class ElasTestRemoteControlParent {
 
     public static final String FAKE_DEVICE = "--use-fake-device-for-media-stream";
     public static final String FAKE_UI = "--use-fake-ui-for-media-stream";
-    public static final String FAKE_FILE = "--use-file-for-fake-video-capture=test.y4m";
+    public static final String FAKE_VIDEO = "--use-file-for-fake-video-capture=test.y4m";
+    public static final String FAKE_AUDIO = "--use-file-for-fake-audio-capture=test.wav";
     public static final String IGNORE_CERTIFICATE = "--ignore-certificate-errors";
+    public static final String DISABLE_SMOOTHNESS = "--disable-rtc-smoothness-algorithm";
 
     static final String REMOTE_CONTROL_JS_OBJECT = "elasTestRemoteControl";
     static final int POLL_TIME_MS = 500;
