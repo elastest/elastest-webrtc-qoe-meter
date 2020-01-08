@@ -46,7 +46,7 @@ public class AppRtcAdvancedTest extends ElasTestRemoteControlParent {
 
     static final String FAKE_VIDEO = "--use-file-for-fake-video-capture=/home/selenium/test.y4m";
     static final String FAKE_AUDIO = "--use-file-for-fake-audio-capture=/home/selenium/test.wav";
-    static final String SUT_URL = "https://appr.tc/";
+    static final String SUT_URL = "https://appr.tc/?stereo=true&audio=echoCancellation=false";
     static final String PRESENTER_NAME = "presenter";
     static final String VIEWER_NAME = "viewer";
     static final String SESSION_NAME = randomUUID().toString();

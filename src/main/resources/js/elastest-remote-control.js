@@ -30,7 +30,7 @@ ElasTestRemoteControl.prototype.startRecording = function(stream) {
 		type : "video",
 		mimeType : "video/webm",
 		frameRate : 24,
-		numberOfAudioChannels : 1,
+		numberOfAudioChannels : 2,
 		sampleRate : 48000
 	};
 	this.recordRTC = RecordRTC(stream, options);

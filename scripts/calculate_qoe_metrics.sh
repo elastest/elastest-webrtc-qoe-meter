@@ -9,7 +9,7 @@ WIDTH=640
 HEIGHT=480
 SOURCE_FOLDER=..
 FPS=24
-AUDIO_SAMPLE_RATE=16000
+PESQ_AUDIO_SAMPLE_RATE=16000
 VIDEO_BITRATE=3M
 JPG_FOLDER=jpg
 FFMPEG_LOG="-loglevel error"
@@ -53,7 +53,7 @@ cleanup() {
        $REMUXED_PRESENTER $REMUXED_VIEWER \
        $TMP_PRESENTER $TMP_VIEWER \
        $YUV_PRESENTER $YUV_VIEWER \
-       $WAV_PRESENTER $WAV_VIEWER resampled_$WAV_PRESENTER resampled_$WAV_VIEWER \
+       $WAV_PRESENTER $WAV_VIEWER resampled_$WAV_PRESENTER resampled_$WAV_VIEWER resampled_ref.wav \
        $PRESENTER $VIEWER \
        $CUT_PRESENTER $CUT_VIEWER \
        $OCR_PRESENTER $OCR_VIEWER
@@ -309,7 +309,10 @@ extract_wav() {
 
    echo "Extracting $output from $input"
    ffmpeg $FFMPEG_LOG -y -i $input $output
-   ffmpeg $FFMPEG_LOG -y -i $input -ar $AUDIO_SAMPLE_RATE resampled_$output
+
+   echo "Resampling audio for PESQ analysis ($PESQ_AUDIO_SAMPLE_RATE Hz)"
+   ffmpeg $FFMPEG_LOG -y -i $input -ar $PESQ_AUDIO_SAMPLE_RATE resampled_$output
+   ffmpeg $FFMPEG_LOG -y -i $AUDIO_REF -ar $PESQ_AUDIO_SAMPLE_RATE resampled_ref.wav
 }
 
 convert_yuv() {
@@ -568,9 +571,8 @@ if $CALCULATE_AUDIO_QOE; then
     REF_PESQ=resampled_$WAV_PRESENTER
     REF_ViSQOL=$WAV_PRESENTER
     if [ ! -z "$AUDIO_REF" ]; then
-        REF_PESQ=$AUDIO_REF
+        REF_PESQ=resampled_ref.wav
         REF_ViSQOL=$AUDIO_REF
-        AUDIO_SAMPLE_RATE=8000
     fi
 
     if [ -z "$PESQ_PATH" ]; then
@@ -578,7 +580,7 @@ if $CALCULATE_AUDIO_QOE; then
     else
         echo "Calculating PESQ"
         cd $PESQ_PATH
-        ./pesq +$AUDIO_SAMPLE_RATE $ORIG_PWD/$REF_PESQ $ORIG_PWD/resampled_$WAV_VIEWER | tail -n 1 > $ORIG_PWD/${PREFIX}_pesq.txt
+        ./pesq +$PESQ_AUDIO_SAMPLE_RATE $ORIG_PWD/$REF_PESQ $ORIG_PWD/resampled_$WAV_VIEWER | tail -n 1 > $ORIG_PWD/${PREFIX}_pesq.txt
     fi
 
     if [ -z "$VISQOL_PATH" ]; then
