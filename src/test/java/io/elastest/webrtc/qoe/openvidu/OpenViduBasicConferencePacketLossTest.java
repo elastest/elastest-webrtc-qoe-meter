@@ -64,7 +64,7 @@ public class OpenViduBasicConferencePacketLossTest
     public OpenViduBasicConferencePacketLossTest(@Arguments({ FAKE_DEVICE,
             FAKE_UI,
             FAKE_FILE_IN_CONTAINER }) @DockerBrowser(type = CHROME, version = "beta", volumes = {
-                    "~:/home/selenium" }) WebDriver presenter,
+                    ".:/home/selenium" }) WebDriver presenter,
             @Arguments({ FAKE_DEVICE, FAKE_UI }) ChromeDriver viewer) {
         super(SUT_URL, presenter, viewer);
         this.presenter = presenter;

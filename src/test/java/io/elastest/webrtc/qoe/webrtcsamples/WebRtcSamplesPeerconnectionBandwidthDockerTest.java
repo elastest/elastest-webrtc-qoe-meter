@@ -62,7 +62,7 @@ public class WebRtcSamplesPeerconnectionBandwidthDockerTest
     public WebRtcSamplesPeerconnectionBandwidthDockerTest(@Arguments({
             FAKE_DEVICE, FAKE_UI, FAKE_VIDEO,
             FAKE_AUDIO }) @DockerBrowser(type = CHROME, version = "beta", volumes = {
-                    "~:/home/selenium" }) WebDriver driver) {
+                    ".:/home/selenium" }) WebDriver driver) {
         super(SUT_URL, driver);
         this.driver = driver;
         forceGetUserMediaVideoAndAudio(driver);

@@ -66,7 +66,7 @@ public class OpenViduBasicConferenceAudioVideoTest
     public OpenViduBasicConferenceAudioVideoTest(@Arguments({ FAKE_DEVICE,
             FAKE_UI, FAKE_VIDEO, FAKE_AUDIO,
             IGNORE_CERTIFICATE }) @DockerBrowser(type = CHROME, version = "beta", volumes = {
-                    "~:/home/selenium" }) WebDriver presenter,
+                    ".:/home/selenium" }) WebDriver presenter,
             @Arguments({ FAKE_DEVICE, FAKE_UI,
                     IGNORE_CERTIFICATE }) ChromeDriver viewer) {
         super(SUT_URL, presenter, viewer);
