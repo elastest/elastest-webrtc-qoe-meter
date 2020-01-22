@@ -16,7 +16,7 @@ applications.
 In order to carry out this QoE assessment, a process made up by three stage is proposed:
 
 1. Generate input video. This step is done using a the bash script [generate_input_video.sh].
-2. Run an automated test based on Selenium, JUnit, and Docker. This step is done using a test case, for example [OpenViduBasicConferencePacketLossTest].
+2. Run an automated test based on Selenium, JUnit, and Docker. This step is done using a test case, for example [OpenViduBasicConferencePacketLossTest] or [AppRtcAdvancedTest].
 3. Calculate QoE metrics. This step is aimed to post process video recordings and generate objective (VMAF, SSIM, PSNR, VIFp, etc) results using the bash script [calculate_qoe_metrics.sh].
 
 This repository also contains the [result data] (objective and subjective) of a experiment done using [OpenVidu basic video conference demo] as System Under Test.
@@ -118,6 +118,7 @@ Mailing List] and through [StackOverflow] using the tag *elastest*.
 [Universidad Rey Juan Carlos]: https://www.urjc.es/
 [generate_input_video.sh]: https://github.com/elastest/elastest-webrtc-qoe-meter/blob/master/scripts/generate_input_video.sh
 [OpenViduBasicConferencePacketLossTest]: https://github.com/elastest/elastest-webrtc-qoe-meter/blob/master/src/test/java/io/elastest/webrtc/qoe/openvidu/OpenViduBasicConferencePacketLossTest.java
+[AppRtcAdvancedTest]: https://github.com/elastest/elastest-webrtc-qoe-meter/blob/master/src/test/java/io/elastest/webrtc/qoe/apprtc/AppRtcAdvancedTest.java
 [calculate_qoe_metrics.sh]: https://github.com/elastest/elastest-webrtc-qoe-meter/blob/master/scripts/calculate_qoe_metrics.sh
 [OpenVidu basic video conference demo]: https://demos.openvidu.io/basic-videoconference/
 [result data]: https://github.com/elastest/elastest-webrtc-qoe-meter/tree/master/data
