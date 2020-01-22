@@ -16,13 +16,6 @@
  */
 function ElasTestRemoteControl() {
 	this.recordRTC = null;
-	this.recordingData;
-}
-
-ElasTestRemoteControl.prototype.sayHello = function() {
-	var hello = "Hello from ElasTest Remote Control";
-	console.info(hello);
-	return hello;
 }
 
 ElasTestRemoteControl.prototype.startRecording = function(stream) {
@@ -91,7 +84,7 @@ ElasTestRemoteControl.prototype.recordingToData = function() {
 }
 
 /*
- * Override RTCPeerConnection
+ * Monkey Patching (override RTCPeerConnection)
  */
 var peerConnections = [];
 var origPeerConnection = window.RTCPeerConnection;
