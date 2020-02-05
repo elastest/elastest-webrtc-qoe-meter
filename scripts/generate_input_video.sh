@@ -95,34 +95,39 @@ fi
 #######################
 echo "Cutting original video (duration $VIDEO_DURATION)"
 ffmpeg $FFMPEG_LOG -y -i "$VIDEO_SAMPLE_NAME" -ss 00:00:00 -t $VIDEO_DURATION -vf scale="$WIDTH:$HEIGHT",setsar=1:1 -r $FPS test-no-frame-number.mp4
+
+#########################
+# 3. Overlay frame number
+#########################
+echo "Overlaying frame number in the video content"
 ffmpeg $FFMPEG_LOG -y -i test-no-frame-number.mp4 -vf drawtext="fontfile=$FONT:text='\   %{frame_num}  \ ':start_number=1:x=(w-tw)/2:y=h-(2*lh)+15:fontcolor=black:fontsize=40:box=1:boxcolor=white:boxborderw=10" test-no-padding.mp4
 
 #################################################
-# 3. Create padding video based on a test pattern
+# 4. Create padding video based on a test pattern
 #################################################
 echo "Creating padding video ($PADDING_DURATION_SEC seconds)"
 ffmpeg $FFMPEG_LOG -y -f lavfi -i testsrc=duration=$PADDING_DURATION_SEC:size="$WIDTH"x"$HEIGHT":rate=$FPS -f lavfi -i sine=frequency=$TONE_FREQUENCY_HZ:duration=$PADDING_DURATION_SEC padding.mp4
 
 ############################
-# 4. Concatenate final video
+# 5. Concatenate final video
 ############################
 echo "Concatenating padding and content videos"
 ffmpeg $FFMPEG_LOG -y -i padding.mp4 -i test-no-padding.mp4 -i padding.mp4 -filter_complex concat=n=3:v=1:a=1 test.mp4
 
 #########################
-# 5. Convert video to Y4M
+# 6. Convert video to Y4M
 #########################
 echo "Converting resulting video to Y4M ($TARGET_VIDEO)"
 ffmpeg $FFMPEG_LOG -y -i test.mp4 -pix_fmt yuv420p $TARGET_VIDEO
 
 #########################
-# 6. Convert audio to WAV
+# 7. Convert audio to WAV
 #########################
 echo "Converting resulting audio to WAV ($TARGET_AUDIO)"
 ffmpeg $FFMPEG_LOG -y -i test.mp4 -vn -acodec pcm_s16le -ar $AUDIO_SAMPLE_RATE_HZ -ac $AUDIO_CHANNELS_NUMBER $TARGET_AUDIO
 
 ###############################
-# 7. Generate default reference
+# 8. Generate default reference
 ###############################
 if $GENERATE_DEFAULT_REF; then
    echo "Generating default video reference ($DEFAULT_VIDEO_REF)"
@@ -133,7 +138,7 @@ if $GENERATE_DEFAULT_REF; then
 fi
 
 ################################
-# 8. Delete temporal video files
+# 9. Delete temporal video files
 ################################
 if $CLEANUP; then
    cleanup
