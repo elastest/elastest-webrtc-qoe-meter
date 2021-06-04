@@ -357,10 +357,9 @@ align_ocr() {
       f=${files[$i]}
       filename=$(basename $f)
 
-      crop_value=100x45+270+430
-      if [ $WIDTH -eq 1280 ] && [ $HEIGHT -eq 720 ]; then
-         crop_value=100x45+590+670
-      fi
+      left=`expr $WIDTH / 2 - 50`
+      top=`expr $HEIGHT - 50`
+      crop_value=100x45+$left+$top
       convert $f -crop $crop_value $cut_folder/_$filename
 
       #frame=$(tesseract $cut_folder/_$filename stdout --psm 7 digits 2>/dev/null | sed -r '/^\s*$/d')
